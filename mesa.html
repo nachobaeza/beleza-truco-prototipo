@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14100C">
+<title>Beleza Truco · mesa</title>
+<!-- DESIGN §3.1 · fuentes -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@400..900&family=Londrina+Solid:wght@400;900&family=Fraunces:opsz,wght@9..144,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="mesa.css">
+</head>
+<body class="bar">
+
+<!-- El escenario: 390×844 (celular) o 1440×900 (desktop), escalado para entrar en la ventana.
+     Todas las coordenadas de DESIGN §7 se escriben en px del escenario (mesa.css). -->
+<div class="stage" id="stage" data-layout="mobile" data-mode="2v2" data-variant="paulista" data-phase="lobby">
+
+  <!-- Marca de agua del letrero (sólo desktop, §7.2) -->
+  <div class="watermark" aria-hidden="true">TRUCO</div>
+
+  <!-- §7.1 Header -->
+  <header class="hdr">
+    <button class="icon-btn" id="btn-sair" type="button" aria-label="Sair da mesa" title="Sair da mesa">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M10 6 4 12l6 6M4 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <!-- Valor de la mesa y taxa: dato (§10). Los llena mesa.js desde las constantes MESA_VALUE / TAXA (misma fuente que la tarjeta de resultado) -->
+    <div class="chip mesa-chip" id="mesa-chip"><span id="chip-variante">Paulista</span> · <span id="chip-modo">2x2</span> · <b id="chip-valor">R$ 2,00</b> · taxa <span id="chip-taxa">7 %</span></div>
+    <button class="icon-btn" id="btn-ajustes" type="button" aria-label="Ajustes e demo" title="Ajustes" aria-haspopup="dialog">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </header>
+
+  <!-- §6.5 Placar de transmissão -->
+  <section class="placar surface-1" id="placar" aria-label="Placar">
+    <div class="pl-side pl-us">
+      <span class="t-label pl-label" id="label-us">NÓS</span>
+      <!-- §6.5: en 1v1 (VOCÊ · ELE) cada lado lleva un avatar de 20 px (inicial + anillo de equipo) al lado de los pontos; en 2v2 queda oculto -->
+      <span class="pl-row"><span class="pl-avatar" id="pl-av-us" aria-hidden="true"></span><span class="t-score pl-pts" id="pts-us" aria-live="polite">0</span></span>
+      <span class="pl-dots" id="dots-us" aria-label="Rodadas de NÓS"><i></i><i></i><i></i></span>
+    </div>
+    <div class="pl-center">
+      <div class="pl-vale-row"><span class="t-label pl-label" id="vale-label">VALE</span><span class="t-value pl-vale" id="vale" aria-live="polite">1</span></div>
+      <div class="chip chip-manilha" id="chip-manilha">MANILHA <b id="manilha-rank">–</b> <span class="suits" id="manilha-suits"><i data-s="paus">♣</i><i data-s="copas">♥</i><i data-s="espadas">♠</i><i data-s="ouros">♦</i></span></div>
+    </div>
+    <div class="pl-side pl-them">
+      <span class="t-label pl-label" id="label-them">ELES</span>
+      <span class="pl-row"><span class="t-score pl-pts" id="pts-them" aria-live="polite">0</span><span class="pl-avatar them" id="pl-av-them" aria-hidden="true"></span></span>
+      <span class="pl-dots" id="dots-them" aria-label="Rodadas de ELES"><i></i><i></i><i></i></span>
+    </div>
+  </section>
+
+  <!-- §6.11 Píldora de rodada, pegada al placar -->
+  <div class="pill pill-rodada" id="pill" aria-live="polite"></div>
+
+  <!-- §7 Paño con rail de mueble, filete de latón y filo -->
+  <div class="mesa-frame" id="frame">
+    <svg class="brass-draw" id="brass-draw" aria-hidden="true"><path id="brass-path" d=""/></svg>
+    <svg class="brass-hi" id="brass-hi" aria-hidden="true"><path id="brass-hi-path" d=""/></svg>
+    <div class="felt" id="felt"></div>
+  </div>
+
+  <!-- Capa de juego sobre el paño: asientos, slots, mazo, vira, banco, sellos (coordenadas §7) -->
+  <div class="table-layer" id="table">
+    <!-- Guía VIRA → MANILHA: se desvanece (.7 → 0) antes del slot del parceiro; el gradiente va en coordenadas del usuario (JS) -->
+    <svg class="vira-line" id="vira-line" aria-hidden="true">
+      <defs><linearGradient id="vira-grad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="0"><stop offset="0" stop-opacity="1"/><stop offset="1" stop-opacity="0"/></linearGradient></defs>
+      <line id="vira-line-l" x1="0" y1="0" x2="0" y2="0"/>
+    </svg>
+
+    <!-- Asientos ajenos (se completan por JS: 1 = direita, 2 = parceiro, 3 = esquerda) -->
+    <div class="seat seat-them" id="seat-1" data-seat="1"></div>
+    <div class="seat seat-us" id="seat-2" data-seat="2"></div>
+    <div class="seat seat-them" id="seat-3" data-seat="3"></div>
+
+    <!-- Slots en cruz -->
+    <div class="slot" id="slot-2" data-seat="2"></div>
+    <div class="slot" id="slot-3" data-seat="3"></div>
+    <div class="slot" id="slot-1" data-seat="1"></div>
+    <div class="slot" id="slot-0" data-seat="0"></div>
+
+    <!-- Mazo y vira -->
+    <div class="vira" id="vira" aria-hidden="true"><span class="chip chip-vira vira-tab">VIRA</span><div class="vira-card" id="vira-card"></div></div>
+    <div class="deck" id="deck" aria-hidden="true"></div>
+
+    <!-- Carril del parceiro (mão de onze) -->
+    <div class="carril" id="carril" aria-label="Cartas do parceiro"></div>
+
+    <!-- Banco de vazas -->
+    <div class="bank bank-us" id="bank-us" aria-label="Vazas de NÓS"></div>
+    <div class="bank bank-them" id="bank-them" aria-label="Vazas de ELES"></div>
+
+    <!-- Sello de grito y banner de mano, centrados en la cruz -->
+    <div class="stamp-wrap" id="stamp" aria-live="assertive"></div>
+    <div class="banner" id="banner" aria-live="assertive"></div>
+
+    <!-- Toasts -->
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+  </div>
+
+  <!-- Mi asiento (avatar 56 + anillo de timer + badge + nombre) -->
+  <div class="seat seat-us me" id="seat-0" data-seat="0"></div>
+
+  <!-- Chat / emotes / sinais -->
+  <button class="chat-btn" id="btn-chat" type="button" aria-label="Chat, emotes e sinais" aria-haspopup="true" aria-expanded="false">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+  </button>
+
+  <!-- Mi mano -->
+  <div class="hand" id="hand" aria-label="Suas cartas"></div>
+
+  <!-- §6.8 Botonera -->
+  <div class="botonera surface-1" id="bar" data-config="turno">
+    <div class="bar-slot bar-slot-a"><button class="btn btn-ghost-run" id="btn-correr" type="button" aria-label="Correr">CORRER<span class="key">C</span></button></div>
+    <div class="bar-slot bar-slot-b">
+      <button class="btn btn-ghost-brass" id="btn-coberta" type="button" aria-pressed="false" aria-label="Jogar coberta">JOGAR COBERTA</button>
+      <button class="btn btn-ghost-ok" id="btn-aceitar" type="button" aria-label="Aceitar" hidden>ACEITAR<span class="key">A</span></button>
+    </div>
+    <div class="bar-slot bar-slot-c">
+      <button class="btn btn-truco" id="btn-truco" type="button" aria-label="Pedir truco">TRUCO!<span class="key">T</span></button>
+      <button class="btn btn-fill-ok" id="btn-jogar" type="button" aria-label="Jogar a mão de onze" hidden>JOGAR<span class="key">A</span></button>
+      <!-- §6.7/§6.8: en mão de onze y mão de ferro no hay truco; el tercer hueco lo ocupa un chip no tocable
+           (Gabarito, --brass) para que la barra conserve sus tres partes en vez de quedar con un hueco en blanco -->
+      <span class="chip bar-note" id="bar-note" hidden>SEM TRUCO</span>
+    </div>
+    <div class="bar-dim" id="bar-dim"><span id="bar-dim-text">Vez de …</span></div>
+    <div class="bar-wait" id="bar-wait"><span id="bar-wait-text">Aguardando resposta…</span><i class="bar-wait-line"></i></div>
+  </div>
+
+  <!-- §6.19 Pie legal -->
+  <p class="legal legal-foot">O jogo pode ser viciante. Jogue com responsabilidade. 18+.</p>
+
+  <!-- Capa de efectos: cartas en vuelo -->
+  <div class="fx" id="fx" aria-hidden="true"></div>
+
+  <!-- Popover del banco -->
+  <div class="popover surface-2" id="bank-pop" hidden></div>
+
+  <!-- Popover de chat -->
+  <div class="popover chat-pop surface-2" id="chat-pop" hidden role="menu" aria-label="Chat"></div>
+
+  <!-- §6.18 Resultado -->
+  <div class="result" id="result" hidden>
+    <div class="scrim result-scrim"></div>
+    <div class="result-body">
+      <div class="result-title" id="result-title">VITÓRIA</div>
+      <div class="result-card surface-2" id="result-card"></div>
+    </div>
+  </div>
+
+  <!-- §6.20 Modal de ajustes + panel de demo -->
+  <div class="modal" id="settings" hidden role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <div class="scrim" id="settings-scrim"></div>
+    <div class="modal-card surface-2">
+      <div class="modal-head"><h2 id="settings-title" class="t-label">Ajustes · demo</h2><button class="icon-btn" id="settings-close" type="button" aria-label="Fechar">✕</button></div>
+      <div class="modal-grid">
+        <label class="field"><span>Variante</span><select id="set-variant"><option value="paulista">Paulista</option><option value="mineiro">Mineiro</option></select></label>
+        <label class="field"><span>Modo</span><select id="set-mode"><option value="2v2">2x2</option><option value="1v1">1x1</option></select></label>
+        <label class="field"><span>Velocidade</span><select id="set-speed"><option value="1.4">Lenta</option><option value="1" selected>Normal</option><option value="0.7">Rápida</option></select></label>
+        <label class="field"><span>Animações</span><select id="set-motion"><option value="auto">Automático</option><option value="on">Ligadas</option><option value="off">Desligadas</option></select></label>
+        <label class="field"><span>Alto contraste</span><select id="set-contrast"><option value="normal">Não</option><option value="high">Sim</option></select></label>
+        <label class="field"><span>Régua de força</span><select id="set-rule"><option value="off">Desligada</option><option value="on">Ligada</option></select></label>
+        <label class="field"><span>Tamanho da fonte</span><select id="set-font"><option value="1">Normal</option><option value="1.15">Grande</option><option value="1.3">Maior</option></select></label>
+        <label class="field"><span>Seed</span><input id="set-seed" type="number" inputmode="numeric" min="0" step="1" placeholder="aleatória"></label>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost-ok" id="set-new" type="button">Nova partida</button>
+      </div>
+      <h3 class="t-label modal-sub">Forçar estado</h3>
+      <div class="modal-force">
+        <button class="btn btn-ghost-brass" id="force-onze" type="button">Mão de onze</button>
+        <button class="btn btn-ghost-brass" id="force-ferro" type="button">Mão de ferro</button>
+        <button class="btn btn-ghost-brass" id="force-truco" type="button">Rival pede truco</button>
+        <button class="btn btn-ghost-brass" id="force-tie" type="button">Empate</button>
+      </div>
+      <p class="modal-note t-body" id="force-note"></p>
+      <p class="legal">O jogo pode ser viciante. Jogue com responsabilidade. 18+.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts clásicos, sin módulos -->
+<script src="cards.js"></script>
+<script src="truco-engine.js"></script>
+<script src="mesa.js"></script>
+</body>
+</html>

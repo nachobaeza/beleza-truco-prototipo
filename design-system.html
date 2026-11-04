@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Beleza Truco · Sistema de design</title>
+<!-- DESIGN §3.1 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@400..900&family=Londrina+Solid:wght@400;900&family=Fraunces:opsz,wght@9..144,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="design-system.css">
+<style>
+/* Ajuste local (ronda de revisión 1): la cita de dirección va en Gabarito 600 (--t-chicana escalada a 22/1.3)
+   y sólo la palabra TRUCO grita en Londrina 900 (DESIGN §3.1: Londrina nunca en cuerpo, ≤ 6 palabras, ≥ 20 px).
+   Sobrescribe .ds-quote de design-system.css línea 308; migrar allí cuando ese archivo quede libre. */
+.ds-quote { font: 600 22px/1.3 var(--font-ui); letter-spacing: 0; max-width: 44ch; }
+@media (min-width: 1024px) { .ds-quote { font-size: 26px; } }
+.ds-quote .grito { font: 900 1.15em/1 var(--font-display); letter-spacing: .02em; color: var(--lamp); text-transform: uppercase; }
+
+/* Ajuste local (ronda de revisión 2, severidad media): Anatomia · §5.2 en 390 px.
+   .anatomy .stage pedía 450 px fijos y, como el grid de .anatomy no declaraba columna en celular, la columna implícita
+   se agrandaba a 450 y el <ol> quedaba de 450 px (borde derecho en x 466): el body tiene overflow-x hidden y cada ítem
+   se cortaba sin aviso. La columna pasa a minmax(0, 1fr) y el stage a min(450px, 100%); el escalado .76 del stage se
+   mantiene (los callouts son absolutos desde la esquina superior izquierda, no se mueven).
+   Sobrescribe design-system.css líneas 400-402; migrar allí cuando ese archivo quede libre. */
+.anatomy { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 800px) { .anatomy { grid-template-columns: 470px minmax(0, 1fr); } }
+.anatomy .stage { width: min(450px, 100%); }
+
+/* Ajuste local (ronda de revisión 2, severidad baja): botonera "dimmed · fora de turno".
+   La píldora "VEZ DE {NOME}" era un velo de ancho completo con el texto suelto en el medio: más angosta que el hueco B,
+   y "JOGAR COBERTA" (dos líneas, al .4) asomaba por arriba y por abajo, leído como superposición. Ahora el hueco B
+   queda vacío (visibility, el hueco sigue ocupando su lugar: la barra nunca desaparece, DESIGN §6.8) y la píldora ocupa
+   el alto útil del hueco (44 px) con --surface-1 opaco y min-width 100 = ancho del hueco. Mismo criterio que
+   mesa.css .bar-dim. Sobrescribe design-system.css línea 130; migrar allí cuando ese archivo quede libre. */
+.botonera.dimmed > :nth-child(2) { visibility: hidden; }
+.botonera .vez {
+  inset: auto; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  display: inline-flex; box-sizing: border-box; height: 44px; min-width: 100px; padding: 0 var(--s-3); white-space: nowrap;
+  background: var(--surface-1); border: 1px solid var(--border-brass); border-radius: var(--r-pill);
+}
+
+/* Ajuste local (ronda de revisión 2, severidad baja): el trazo rojo del ícono wifiOff viene como stroke="#D9414E"
+   hardcodeado en design-system.js línea 28 (ICO.wifiOff). El atributo de presentación pierde contra cualquier regla CSS,
+   así que el color sale del token --run. El arreglo de fondo es stroke="var(--run)" en el JS (archivo ajeno, pendiente). */
+.avatar .offline svg path[stroke] { stroke: var(--run); }
+</style>
+</head>
+<body class="bar">
+<div class="ds">
+
+  <!-- ===================== NAVEGACIÓN ===================== -->
+  <nav class="ds-nav" aria-label="Seções">
+    <div class="brand"><b>Beleza Truco</b><span>Sistema de design · v1</span></div>
+    <ol id="nav">
+      <li><a href="#s0"><i>00</i>Direção</a></li>
+      <li><a href="#s1"><i>01</i>Cor</a></li>
+      <li><a href="#s2"><i>02</i>Luz e grão</a></li>
+      <li><a href="#s3"><i>03</i>Tipografia</a></li>
+      <li><a href="#s4"><i>04</i>Espaço, raios, sombras</a></li>
+      <li><a href="#s5"><i>05</i>Cartas</a></li>
+      <li><a href="#s6"><i>06</i>Componentes</a></li>
+      <li><a href="#s7"><i>07</i>Telas (mocks)</a></li>
+      <li><a href="#s8"><i>08</i>Motion</a></li>
+      <li><a href="#s9"><i>09</i>Vocabulário</a></li>
+      <li><a href="#s10"><i>10</i>Checklist</a></li>
+    </ol>
+    <div class="foot">Uma lâmpada, uma mesa, uma voz.</div>
+  </nav>
+
+  <main class="ds-main">
+
+    <header class="ds-hero">
+      <h1>Sistema de design</h1>
+      <p>Tudo o que aparece na mesa, vivo e medido: tokens, luz, tipografia, as 40 cartas, os 20 componentes com seus estados, as telas estáticas e o motion. Fonte de verdade: <code>DESIGN.md</code>. Medidas em px CSS para 390×844 e 1440×900.</p>
+      <div class="meta">
+        <span class="chip">Paulista · 2x2 · <b>R$ 2,00</b> · taxa 7 %</span>
+        <span class="chip chip-small">Mineiro</span>
+        <label class="ds-toggle"><input type="checkbox" id="tg-contrast"> Alto contraste</label>
+        <label class="ds-toggle"><input type="checkbox" id="tg-motion"> Animações desligadas</label>
+      </div>
+    </header>
+
+    <!-- ===================== 0 DIRECCIÓN ===================== -->
+    <section class="ds-section" id="s0">
+      <header>
+        <span class="n">00 · Direção</span>
+        <h2>Uma lâmpada, uma mesa, uma voz</h2>
+        <p>A direção fechada é a luz de um bar à noite, construída com disciplina editorial e organizada por um placar de transmissão. O bar não se desenha: se sente na luz, na tipografia de letreiro e nos materiais.</p>
+      </header>
+      <blockquote class="ds-quote">"Onze da noite, uma lâmpada quente sobre o pano verde, e a mesa inteira olha quando alguém grita <b class="grito">Truco</b>."</blockquote>
+      <div class="ds-rule">
+        <div><b>A regra da lâmpada</b><p>Todo elemento recebe a mesma luz: mais claro em cima, mais escuro embaixo, grão fino. Se um elemento não recebe a luz, está colado e sai.</p></div>
+        <div><b>Quatro materiais</b><p>Penumbra quente, pano verde garrafa, papel creme, latão. Nada de madeira, couro, foto, azulejo, fichas, moedas ou confete.</p></div>
+        <div><b>A luz reage ao jogo</b><p>Sobe no pedido de truco, fica alta na mão de onze, cai na mão de ferro, fica acesa na vitória e baixa na derrota. É uma máquina de estados, não decoração.</p></div>
+      </div>
+
+      <div class="ds-sub">A luz como máquina de estados · §2.1</div>
+      <div class="light-demo bar" id="light-demo">
+        <div class="felt"><span class="stamp-svg" id="light-stamp" style="color:var(--lamp)"></span></div>
+        <div class="readout">--light-cone-alpha <b id="light-val">.16</b> · <span id="light-note">reposo</span></div>
+        <div class="seg" id="light-seg">
+          <button data-state="" class="on">Repouso · .16</button>
+          <button data-state="is-truco-pending">Truco · .26</button>
+          <button data-state="is-onze">Onze · .24</button>
+          <button data-state="is-ferro">Ferro · .08</button>
+          <button data-state="is-victory">Vitória · .30</button>
+          <button data-state="is-defeat">Derrota · .10</button>
+          <button data-state="is-manilha-played" data-once="1">Manilha · +.06</button>
+          <button data-state="is-offline" data-once="1">Offline · pisca</button>
+        </div>
+      </div>
+      <p class="ds-note">As classes <code>.is-truco-pending</code>, <code>.is-onze</code>, <code>.is-ferro</code>, <code>.is-victory</code>, <code>.is-defeat</code>, <code>.is-manilha-played</code> e <code>.is-offline</code> vão em <code>&lt;body&gt;</code>, em <code>.bar</code> ou em <code>.mesa</code>. A subida do truco dura 300 ms, a descida 600 ms.</p>
+    </section>
+
+    <!-- ===================== 1 COLOR ===================== -->
+    <section class="ds-section" id="s1">
+      <header>
+        <span class="n">01 · Cor</span>
+        <h2>Tokens de cor</h2>
+        <p>Todos os valores de <code>tokens.css</code>, com papel e nota. O dourado é luz, nunca preenchimento de área grande; o âmbar da lâmpada existe só no botão TRUCO e no selo do grito; o azul de ELES é a única cor fria.</p>
+      </header>
+      <div id="swatches"></div>
+      <div class="ds-sub">A paleta em uma linha · §1.6</div>
+      <div class="palette-line" id="palette-line" aria-label="paleta"></div>
+      <div class="ds-sub">O que NÃO vai · referências descartadas</div>
+      <div class="nogo">
+        <span>#31373B<b>grafite frio (PlayTruco)</b></span>
+        <span>#000000<b>preto puro (Joga Truco)</b></span>
+        <span>#1F8F4A<b>verde ZingPlay</b></span>
+        <span>#35894B<b>verde PlayTruco</b></span>
+        <span>#E0E0E0<b>carta cinza (PlayTruco)</b></span>
+        <span>#FFFFFF<b>carta branca (apps grátis)</b></span>
+        <span>#0E1F17<b>pano "preto" de C</b></span>
+        <span>dourado metálico<b>gradiente cromado / baranda de pôquer</b></span>
+        <span>verde-bet + vermelho-tigrinho<b>feed de iGaming</b></span>
+      </div>
+    </section>
+
+    <!-- ===================== 2 LUZ Y GRANO ===================== -->
+    <section class="ds-section" id="s2">
+      <header>
+        <span class="n">02 · Luz e grão</span>
+        <h2>Cone, vinheta, grão e os glows fechados</h2>
+        <p>Um único asset <code>noise.svg</code> (feTurbulence .9, 2 oitavas) com <code>mix-blend-mode: overlay</code>: 3 % sobre o fundo, 5 % sobre o pano, 0 % em texto, chips e cartas. Sem grão a direção vira "hex planos".</p>
+      </header>
+      <div class="grain-demo">
+        <div class="box bar" id="grain-on"><span class="cap">Com grão · 3 % / 5 %</span><div class="felt"><span class="t-label">pano com vinheta</span></div></div>
+        <div class="box bar" id="grain-off" style="--grain-bar:0; --grain-felt:0"><span class="cap">Sem grão · hex planos</span><div class="felt"><span class="t-label">pano com vinheta</span></div></div>
+      </div>
+      <div class="seg" style="margin-top:12px"><button id="tg-grain" class="on">Grão ligado na página</button></div>
+      <div class="ds-sub">Glow · §2.3 (fechado: nada fora desta lista)</div>
+      <div class="felt glow-row" id="glow-row"></div>
+      <p class="ds-note"><b>Proibido:</b> glow permanente em cartas, partículas em loop, confete, moedas, raios. A celebração é a luz.</p>
+    </section>
+
+    <!-- ===================== 3 TIPOGRAFÍA ===================== -->
+    <section class="ds-section" id="s3">
+      <header>
+        <span class="n">03 · Tipografia</span>
+        <h2>Gabarito conta, Fraunces retrata, Londrina grita</h2>
+        <p>Três famílias OFL, três papéis fechados, sem itálicas. Londrina Solid 900 só para o grito (≤ 6 palavras por tela, ≥ 20 px); Gabarito para tudo o que conta, com <code>tabular-nums</code>; Fraunces 700 só nas 16 letras Q J K A.</p>
+      </header>
+      <div class="ds-sub">Londrina Solid 900 · o grito</div>
+      <div class="type-shout">
+        <span style="color:var(--lamp)">Truco!</span><span style="color:var(--lamp)">Seis!</span><span style="color:var(--lamp)">Nove!</span><span style="color:var(--lamp)">Doze!</span>
+        <span style="color:var(--ok)">Desce!</span><span style="color:var(--run)">Tô fora!</span><span style="color:var(--tie)">Empachou!</span>
+      </div>
+      <div class="ds-sub">Gabarito · escala completa <code>--t-*</code></div>
+      <div class="type-scale" id="type-scale"></div>
+      <div class="ds-sub">Fraunces 700 · só as figuras</div>
+      <div class="type-fig"><span>Q</span><span>J</span><span>K</span><span>A</span></div>
+      <div class="type-rule">
+        <div><span class="w count">12 × 09</span><p><b>Gabarito conta.</b> Placar, VALE, timer, R$, chips, botões, índices das 40 cartas. Números tabulares sempre.</p></div>
+        <div><span class="w portray">Q J K</span><p><b>Fraunces retrata.</b> Só a letra central das figuras, a 46 % da altura da carta, onde tem corpo (≥ 38 px).</p></div>
+        <div><span class="w shout">Truco!</span><p><b>Londrina grita.</b> Selos, banners, o botão TRUCO e o nome da marca. Nunca em botões secundários nem em corpo.</p></div>
+      </div>
+    </section>
+
+    <!-- ===================== 4 ESPACIADO ===================== -->
+    <section class="ds-section" id="s4">
+      <header>
+        <span class="n">04 · Espaço, raios, sombras</span>
+        <h2>Escala de 4, raios fechados e as únicas sombras reais</h2>
+        <p>Superfícies não têm sombra: borda de 1 px + blur. As únicas sombras reais do sistema são as das cartas (objetos) e a sombra de cor do botão TRUCO.</p>
+      </header>
+      <div class="ds-sub">Espaçamento</div>
+      <div class="space-row" id="space-row"></div>
+      <div class="ds-sub">Raios</div>
+      <div class="radius-row" id="radius-row"></div>
+      <div class="ds-sub">Sombras de carta e sombra de cor</div>
+      <div class="felt shadow-row" id="shadow-row"></div>
+      <div class="ds-sub">Alturas tocáveis</div>
+      <div class="space-row" id="touch-row"></div>
+    </section>
+
+    <!-- ===================== 5 CARTAS ===================== -->
+    <section class="ds-section" id="s5">
+      <header>
+        <span class="n">05 · Cartas</span>
+        <h2>As 40 peças</h2>
+        <p>Proporção 0,68, raio 7 %, dois índices Gabarito 800, pip único, pips próprios "traço de carimbo", figuras Fraunces com emblema geométrico a duas tintas, régua de força apagada por padrão, manilha invertida, zap, um só dorso.</p>
+      </header>
+      <div class="ds-sub">Anatomia · §5.2</div>
+      <div class="anatomy" id="anatomy"></div>
+      <div class="ds-sub">Baralho completo · 104 px (mão própria)</div>
+      <label class="ds-toggle" style="margin-bottom:10px"><input type="checkbox" id="tg-rule"> Régua de força (apagada por padrão em mesas com dinheiro)</label>
+      <div class="deck-grid" id="deck-grid"></div>
+      <div class="ds-sub">Manilha invertida · vira 7 → manilha Q · §5.4</div>
+      <div class="cards-row" id="manilhas"></div>
+      <div class="ds-sub">Mineiro · manilhas fixas 4♣ 7♥ A♠ 7♦</div>
+      <div class="cards-row" id="mineiro"></div>
+      <div class="ds-sub">Dorso · §5.6 (um só, para baralho, mãos alheias e coberta)</div>
+      <div class="cards-row" id="backs"></div>
+      <div class="ds-sub">Régua de força acesa · prática e tutorial</div>
+      <div class="cards-row" id="rule-on"></div>
+      <div class="ds-sub">Prova de leitura · 56 px (cruz) e 28 px (banco) contra o pano e contra o dorso</div>
+      <div class="felt felt-box" id="read56"></div>
+      <div style="height:10px"></div>
+      <div class="felt felt-box" id="read28"></div>
+      <div style="height:10px"></div>
+      <div class="felt felt-box" id="read-back"></div>
+      <p class="ds-note">Critério §11.5: a manilha invertida se reconhece a 28×41 no banco e a 56×82 na cruz sem halo, contra o pano e contra um dorso. Se falhar em três telefones, plano B: cantoneira de latão.</p>
+    </section>
+
+    <!-- ===================== 6 COMPONENTES ===================== -->
+    <section class="ds-section" id="s6">
+      <header>
+        <span class="n">06 · Componentes</span>
+        <h2>Inventário fechado: 20 peças com seus estados</h2>
+        <p>Cada componente é uma peça com estados; não há variantes de estilo. Tudo usa <code>--surface-1/2</code>, <code>--border-brass</code>, os raios de §4 e Gabarito, salvo o grito.</p>
+      </header>
+      <div id="components"></div>
+    </section>
+
+    <!-- ===================== 7 MOCKS ===================== -->
+    <section class="ds-section" id="s7">
+      <header>
+        <span class="n">07 · Telas</span>
+        <h2>Estados estáticos · 390×844</h2>
+        <p>Os estados marcados "Mock" em DESIGN §9, montados com os componentes reais sobre o mapa da mesa de §7.1. Os outros estados são jogáveis em <code>mesa.html</code>.</p>
+      </header>
+      <div class="mocks" id="mocks"></div>
+    </section>
+
+    <!-- ===================== 8 MOTION ===================== -->
+    <section class="ds-section" id="s8">
+      <header>
+        <span class="n">08 · Motion</span>
+        <h2>Evento → duração → easing → o que se move</h2>
+        <p>A carta é um objeto: sombra que cresce com a elevação, rotação ao cair, overshoot ao tocar. Nada desaparece em um quadro. Shake e háptico só no truco e na manilha. <code>--speed</code> multiplica todas as durações.</p>
+      </header>
+      <div class="felt motion-stage" id="motion-stage">
+        <div class="banco banco-us" id="m-banco-us"></div>
+        <div class="banco them banco-them" id="m-banco-them"></div>
+        <div class="deck" id="m-deck"></div>
+        <div class="slot" id="m-slot"></div>
+        <div class="stamp-anchor" id="m-stamp"></div>
+        <div class="hand-area" id="m-hand"></div>
+      </div>
+      <div class="motion-ctl">
+        <div class="seg">
+          <button id="mo-deal">Reparto · 380 ms</button>
+          <button id="mo-fly">Voo de carta · 280 ms</button>
+          <button id="mo-stamp">Manilha estampada · 520 ms</button>
+          <button id="mo-slide">Deslizamento ao banco · 360 ms</button>
+        </div>
+        <label class="speed">--speed <select id="mo-speed"><option value="1.4">lenta 1,4</option><option value="1" selected>normal 1</option><option value="0.7">rápida ,7</option></select></label>
+      </div>
+      <div class="ds-sub">Tabela · §8.2</div>
+      <div class="ds-table-wrap"><table class="ds-table" id="motion-table"></table></div>
+      <div class="ds-sub">Tokens · §8.1</div>
+      <div class="ds-table-wrap"><table class="ds-table" id="motion-tokens"></table></div>
+    </section>
+
+    <!-- ===================== 9 VOCABULARIO ===================== -->
+    <section class="ds-section" id="s9">
+      <header>
+        <span class="n">09 · Vocabulário e compliance</span>
+        <h2>pt-BR paulista, curto e em maiúsculas</h2>
+        <p>Literais confirmados em PlayTruco e Joga Truco. O valor da mesa e a taxa são dado, não gancho; nada de "grátis" nem promessas; pé legal em todas as telas.</p>
+      </header>
+      <div class="vocab" id="vocab"></div>
+    </section>
+
+    <!-- ===================== 10 CHECKLIST ===================== -->
+    <section class="ds-section" id="s10">
+      <header>
+        <span class="n">10 · Checklist</span>
+        <h2>Revisão do protótipo</h2>
+        <p>Doze perguntas. Se alguma falha, o elemento sai ou se refaz: nunca se decora por cima.</p>
+      </header>
+      <ol class="checklist" id="checklist"></ol>
+      <div class="ds-callout"><b>Regra de saída de anúncios:</b> todo quadro leva pano verde garrafa + cartas creme; o âmbar <code>--lamp</code> só no botão TRUCO e no selo; teste em escala de cinza: o dourado não deve aparecer como área.</div>
+    </section>
+
+    <div class="ds-legal-bar"><p class="legal">O jogo pode ser viciante. Jogue com responsabilidade. 18+.</p></div>
+  </main>
+</div>
+
+<script src="cards.js"></script>
+<script src="design-system.js"></script>
+</body>
+</html>

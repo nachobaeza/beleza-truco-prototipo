@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14100C">
+<title>Beleza Truco · mesas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@400..900&family=Londrina+Solid:wght@400;900&family=Fraunces:opsz,wght@9..144,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body class="bar">
+<div class="watermark" aria-hidden="true">TRUCO</div>
+
+<div class="app">
+  <header class="app-hdr">
+    <a class="brand" href="home.html" aria-label="Beleza Truco, início">Beleza Truco</a>
+    <nav class="topnav mid" aria-label="Seções"></nav>
+    <div style="display:flex;align-items:center;gap:8px">
+      <a class="chip chip-saldo" href="caixa.html" aria-label="Saldo disponível, abrir caixa">Saldo <b>R$ 0,00</b></a>
+      <a class="icon-btn" href="mesa.html" aria-label="Ajustes" title="Ajustes">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </a>
+    </div>
+  </header>
+
+  <main class="cols">
+    <section>
+      <!-- Jogadores en línea y mesas abiertas: dato -->
+      <div class="sec-head">
+        <h2>Mesas abertas</h2>
+        <span class="t-label"><span id="online-players">0</span> jogadores online · <span id="online-tables">0</span> mesas</span>
+      </div>
+
+      <!-- Filtros -->
+      <div class="seg-row" role="group" aria-label="Filtros">
+        <div class="seg" id="f-variant" aria-label="Variante">
+          <button type="button" data-v="todas" aria-pressed="true">Todas</button>
+          <button type="button" data-v="Paulista" aria-pressed="false">Paulista</button>
+          <button type="button" data-v="Mineiro" aria-pressed="false">Mineiro</button>
+        </div>
+        <div class="seg" id="f-mode" aria-label="Modo">
+          <button type="button" data-v="todos" aria-pressed="true">1x1 e 2x2</button>
+          <button type="button" data-v="1x1" aria-pressed="false">1x1</button>
+          <button type="button" data-v="2x2" aria-pressed="false">2x2</button>
+        </div>
+        <div class="seg" id="f-value" aria-label="Valor">
+          <button type="button" data-v="todos" aria-pressed="true">Todo valor</button>
+          <button type="button" data-v="baixo" aria-pressed="false">até R$ 1</button>
+          <button type="button" data-v="medio" aria-pressed="false">R$ 2 a 5</button>
+          <button type="button" data-v="alto" aria-pressed="false">R$ 10+</button>
+        </div>
+      </div>
+
+      <!-- Acciones (celular): crear mesa + prática -->
+      <div class="btn-row right" style="margin-bottom:12px">
+        <button class="btn btn-fill-ok" id="btn-criar-m" type="button">Criar mesa</button>
+        <a class="btn btn-ghost-brass" href="mesa.html" aria-label="Mesa de prática com robôs, sem valor em jogo">Prática</a>
+      </div>
+
+      <ul class="list" id="tables" aria-label="Lista de mesas"></ul>
+      <p class="note lo" id="empty" hidden>Nenhuma mesa com esses filtros. Crie uma: os jogadores online veem na hora.</p>
+      <p class="note lo" style="margin-top:12px">O valor da mesa fica reservado ao sentar e é liquidado no fim da partida. A taxa aparece antes de entrar.</p>
+    </section>
+
+    <!-- Columna derecha (desktop): crear mesa inline + prática -->
+    <aside class="sticky">
+      <div class="panel surface-1">
+        <p class="panel-title">Criar mesa</p>
+        <form class="form" id="form-criar" autocomplete="off">
+          <div class="form-grid">
+            <label class="field"><span>Variante</span><select name="variant"><option>Paulista</option><option>Mineiro</option></select></label>
+            <label class="field"><span>Modo</span><select name="mode"><option>2x2</option><option>1x1</option></select></label>
+            <label class="field"><span>Valor por jogador</span><select name="value"><option value="0.5">R$ 0,50</option><option value="1">R$ 1,00</option><option value="2" selected>R$ 2,00</option><option value="5">R$ 5,00</option><option value="10">R$ 10,00</option><option value="20">R$ 20,00</option><option value="50">R$ 50,00</option></select></label>
+            <label class="field"><span>Tempo por jogada</span><select name="timer"><option value="10">10 s</option><option value="20" selected>20 s</option><option value="30">30 s</option></select></label>
+            <label class="field"><span>Série</span><select name="series"><option value="1" selected>Partida única</option><option value="3">Melhor de 3</option><option value="5">Melhor de 5</option></select></label>
+            <label class="field"><span>Mão de ferro</span><select name="ferro"><option value="escuras" selected>Às escuras</option><option value="claras">Às claras</option></select></label>
+          </div>
+          <div class="summary surface-1" style="padding:10px 12px;border-radius:var(--r-chip)">
+            <div class="kv"><span>Mesa</span><b id="sum-mesa">R$ 2,00 × 4</b></div>
+            <div class="kv"><span>Taxa</span><b id="sum-taxa">7 %</b></div>
+            <div class="kv"><span>Cada vencedor recebe</span><b id="sum-neto" class="gold">R$ 3,72</b></div>
+          </div>
+          <button class="btn btn-fill-ok block" type="submit">Criar mesa</button>
+        </form>
+      </div>
+      <div class="panel surface-1">
+        <p class="panel-title">Prática</p>
+        <p class="note">Mesa de treino com robôs, sem valor em jogo. Régua de força ligada. Mesmas regras, mesmo placar.</p>
+        <a class="btn btn-ghost-brass block" href="mesa.html" style="margin-top:10px">Abrir prática</a>
+      </div>
+      <div class="panel surface-1">
+        <p class="panel-title">Agora</p>
+        <div class="stats" style="grid-template-columns:1fr 1fr">
+          <div class="stat"><span class="v sm" id="st-players">0</span><span class="k">jogadores online</span></div>
+          <div class="stat"><span class="v sm" id="st-tables">0</span><span class="k">mesas abertas</span></div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <p class="legal legal-app">O jogo pode ser viciante. Jogue com responsabilidade. 18+.</p>
+</div>
+
+<nav class="tabbar" aria-label="Navegação"><ul></ul></nav>
+
+<!-- Modal Criar mesa (celular) -->
+<div class="modal" id="m-criar" hidden role="dialog" aria-modal="true" aria-labelledby="m-criar-title">
+  <div class="scrim"></div>
+  <div class="modal-card surface-2">
+    <div class="modal-head"><h2 id="m-criar-title">Criar mesa</h2><button class="icon-btn" type="button" data-close aria-label="Fechar">✕</button></div>
+    <form class="form" id="form-criar-m" autocomplete="off">
+      <div class="form-grid">
+        <label class="field"><span>Variante</span><select name="variant"><option>Paulista</option><option>Mineiro</option></select></label>
+        <label class="field"><span>Modo</span><select name="mode"><option>2x2</option><option>1x1</option></select></label>
+        <label class="field"><span>Valor por jogador</span><select name="value"><option value="0.5">R$ 0,50</option><option value="1">R$ 1,00</option><option value="2" selected>R$ 2,00</option><option value="5">R$ 5,00</option><option value="10">R$ 10,00</option><option value="20">R$ 20,00</option><option value="50">R$ 50,00</option></select></label>
+        <label class="field"><span>Tempo por jogada</span><select name="timer"><option value="10">10 s</option><option value="20" selected>20 s</option><option value="30">30 s</option></select></label>
+        <label class="field"><span>Série</span><select name="series"><option value="1" selected>Partida única</option><option value="3">Melhor de 3</option><option value="5">Melhor de 5</option></select></label>
+        <label class="field"><span>Mão de ferro</span><select name="ferro"><option value="escuras" selected>Às escuras</option><option value="claras">Às claras</option></select></label>
+      </div>
+      <div class="summary">
+        <div class="kv"><span>Mesa</span><b data-sum="mesa">R$ 2,00 × 4</b></div>
+        <div class="kv"><span>Taxa</span><b data-sum="taxa">7 %</b></div>
+        <div class="kv"><span>Cada vencedor recebe</span><b data-sum="neto" class="gold">R$ 3,72</b></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost-brass" type="button" data-close>Cancelar</button>
+        <button class="btn btn-fill-ok" type="submit">Criar mesa</button>
+      </div>
+    </form>
+    <p class="legal">O jogo pode ser viciante. Jogue com responsabilidade. 18+.</p>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+(function () {
+  var A = window.APP, $ = A.$;
+  A.mountNav('lobby');
+  $('online-players').textContent = A.num(A.ONLINE.players);
+  $('online-tables').textContent = A.num(A.ONLINE.tables);
+  $('st-players').textContent = A.num(A.ONLINE.players);
+  $('st-tables').textContent = A.num(A.ONLINE.tables);
+
+  /* Filtros */
+  var filters = { variant: 'todas', mode: 'todos', value: 'todos' };
+  function pass(t) {
+    if (filters.variant !== 'todas' && t.variant !== filters.variant) return false;
+    if (filters.mode !== 'todos' && t.mode !== filters.mode) return false;
+    if (filters.value === 'baixo' && t.value > 1) return false;
+    if (filters.value === 'medio' && (t.value < 2 || t.value > 5)) return false;
+    if (filters.value === 'alto' && t.value < 10) return false;
+    return true;
+  }
+  function render() {
+    var rows = A.TABLES.filter(pass);
+    $('tables').innerHTML = rows.map(A.tableRow).join('');
+    $('empty').hidden = rows.length > 0;
+  }
+  A.segment($('f-variant'), function (v) { filters.variant = v; render(); });
+  A.segment($('f-mode'), function (v) { filters.mode = v; render(); });
+  A.segment($('f-value'), function (v) { filters.value = v; render(); });
+  render();
+
+  /* Entrar: en el prototipo abre la mesa jugable (el servidor haría la retención del valor y E-01) */
+  $('tables').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-join]'); if (!b) return;
+    var t = A.TABLES.filter(function (x) { return String(x.id) === b.dataset.join; })[0];
+    A.toast('Entrando na mesa #' + t.id + ' · ' + A.brl(t.value) + ' reservados');
+    setTimeout(function () { location.href = 'mesa.html'; }, 900);
+  });
+
+  /* Resumen de la mesa a crear (misma fórmula que mesa.js §2.7): pozo = valor × n; neto = pozo × (1 − taxa); por ganador = neto / (n/2) */
+  function feeFor(v) { return v >= 10 ? .06 : v < 1 ? .08 : .07; }   /* dato de muestra: la taxa la define el servidor por franja de valor */
+  function wireSummary(form, sum) {
+    function upd() {
+      var v = Number(form.value.value), n = form.mode.value === '2x2' ? 4 : 2, fee = feeFor(v);
+      var mine = v * n * (1 - fee) / (n / 2);
+      sum.mesa.textContent = A.brl(v) + ' × ' + n;
+      sum.taxa.textContent = A.pct(fee);
+      sum.neto.textContent = A.brl(mine);
+    }
+    form.addEventListener('change', upd); upd();
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      A.toast('Mesa criada · ' + form.variant.value + ' · ' + form.mode.value + ' · ' + A.brl(Number(form.value.value)) + ' · taxa ' + sum.taxa.textContent);
+      if (criar) criar.close();
+      setTimeout(function () { location.href = 'mesa.html'; }, 900);
+    });
+  }
+  var fd = $('form-criar');
+  wireSummary(fd, { mesa: $('sum-mesa'), taxa: $('sum-taxa'), neto: $('sum-neto') });
+  var fm = $('form-criar-m');
+  wireSummary(fm, { mesa: fm.querySelector('[data-sum="mesa"]'), taxa: fm.querySelector('[data-sum="taxa"]'), neto: fm.querySelector('[data-sum="neto"]') });
+  var criar = A.modal('m-criar');
+  $('btn-criar-m').addEventListener('click', criar.open);
+})();
+</script>
+</body>
+</html>

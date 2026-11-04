@@ -1,0 +1,539 @@
+/* =====================================================================
+   Beleza Truco · tokens.css
+   Cimientos visuales del prototipo. Fuente de verdad: DESIGN.md (§ citados
+   en cada bloque). Regla madre: una lámpara, una mesa, una voz.
+   Todo lo que no está en DESIGN se deriva y se marca "TOKEN NUEVO".
+   ===================================================================== */
+
+/* ---------------------------------------------------------------------
+   §2.1 · La luz es una máquina de estados. Registramos la variable para
+   que la transición entre estados anime el degradé (no sólo la opacidad).
+   --------------------------------------------------------------------- */
+@property --light-cone-alpha {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.16;
+}
+
+:root {
+  /* ===================== §1.1 Ambiente y superficies ===================== */
+  --bg-bar: #14100C;                 /* casi negro cálido, siempre con grano */
+  --felt-hi: #1E5A44;                /* paño, centro iluminado */
+  --felt-lo: #0D3025;                /* paño, borde en sombra */
+  --felt-edge: #082019;              /* filo del paño, 2 px */
+  --rail: linear-gradient(180deg, #2A2118, #3B2E20); /* borde "de mueble", sin veta */
+  --brass-line: #8C7342;             /* filete de latón dentro del rail */
+  --brass-line-hi: #D9BE7A;          /* brillo 1 px al 35 % sólo en el arco superior */
+  --surface-1: #1E1813;              /* placar, botonera, chips, header */
+  --surface-2: #27201A;              /* popovers, tooltips, tarjeta de resultado */
+  --border-brass: rgba(233, 196, 106, .14);
+  --scrim: rgba(10, 7, 5, .62);      /* + blur(12px); nunca tapa la mano propia */
+  --felt-hi-contrast: #256A50;       /* alto contraste: reemplaza --felt-hi */
+
+  /* ===================== §1.2 Texto ===================== */
+  --ink-hi: #F3E9D6;                 /* papel de cardápio · 14,2:1 */
+  --ink-mid: #B9AB93;                /* secundario · 8,1:1 */
+  --ink-lo: #7E7462;                 /* terciario, pie legal · 4,0:1 (≥ 12 px) */
+  --ink-on-gold: #2A1E0C;            /* texto sobre --lamp */
+
+  /* ===================== §1.3 Dorado: la luz ===================== */
+  --gold: #E9C46A;
+  --gold-hot: #FFE3A1;
+  --gold-deep: #B8903F;
+  --brass: #8C7342;
+  --brass-dim: #5C4C2C;
+  /* el único "dorado metálico" permitido es este degradé a 135° */
+  --gold-gradient: linear-gradient(135deg, var(--gold-hot), var(--gold), var(--gold-deep));
+
+  /* ===================== §1.4 Acción y estado ===================== */
+  --lamp: #FFB13B;                   /* TRUCO! SEIS! NOVE! DOZE! DEZ! — cuota: sólo ahí */
+  --lamp-hot: #FFD98A;
+  --lamp-edge: #C97F12;
+  --run: #D9414E;                    /* CORRER / NÃO QUERO, últimos 5 s, derrota */
+  --run-text: #FF6B75;
+  --ok: #6FD39A;                     /* ACEITAR / JOGAR, halo ganador, DESCE! */
+  --ok-deep: #2E8A5C;
+  --tie: #F6D35B;                    /* empate */
+  --chip-bg: rgba(20, 16, 12, .72);  /* --chip = fondo + borde 1 px --brass */
+  --team-us: var(--gold);
+  --team-them: #5AA9D6;              /* único color frío: nunca en botones ni fondos */
+  --team-them-deep: #2B5F7A;
+  --timer: var(--gold);              /* pasa a --run en los últimos 5 s (300 ms) */
+  --focus: var(--gold-hot);          /* 2 px, offset 2 px */
+
+  /* ===================== §1.5 Cartas ===================== */
+  --card-face: #F4EAD5;
+  --card-face-2: #EADFC6;            /* viñeta 2 % hacia los bordes */
+  --card-edge: rgba(28, 26, 23, .30);
+  --ink-black: #1C1A17;              /* sólo dentro de cartas */
+  --ink-red: #B8302C;                /* vermelho tijolo, sólo dentro de cartas */
+  --ink-brass: #A8863F;              /* segunda tinta de los emblemas Q/J/K */
+  --rank-rule-alpha: .22;            /* --rank-rule = tinta del palo al 22 % */
+  --manilha-face: #1C1A17;
+  --manilha-ink: var(--gold);
+  --manilha-ring: var(--card-face);  /* filete exterior 1,5 px */
+  --manilha-dots: var(--gold);       /* 1–4 puntos de 3 px */
+  --zap-frame: var(--gold-hot);      /* marco interior 1,5 px a 4 % del borde */
+  --vira-tab-bg: var(--chip-bg);     /* --vira-tab = chip + texto --brass */
+  --back-green: #0E3B2C;
+  --back-pattern: #155241;
+  --back-gold: #C9A85C;
+  --back-frame: #F4EAD5;
+
+  /* ===================== §2.1 Luz ===================== */
+  --light-cone-alpha: .16;           /* reposo; los estados la cambian (ver .is-*) */
+  --light-color: 255, 214, 140;      /* rgb del cono, para rgba() */
+
+  /* ===================== §2.2 Grano ===================== */
+  --grain-url: url('noise.svg');
+  --grain-bar: .03;
+  --grain-felt: .05;
+
+  /* ===================== §2.3 Glow (cerrado) ===================== */
+  --glow-win: 0 0 0 2px var(--ok), 0 0 16px rgba(111, 211, 154, .45);
+  --glow-win-them: 0 0 0 2px var(--team-them), 0 0 16px rgba(90, 169, 214, .45);
+  --glow-tie: 0 0 0 2px var(--tie), 0 0 12px rgba(246, 211, 91, .4);
+  --glow-timer-run: 0 0 8px rgba(217, 65, 78, .6);
+  --glow-truco: 0 0 0 1px var(--lamp-edge), 0 6px 18px rgba(255, 177, 59, .28); /* única sombra de color */
+
+  /* ===================== §3.1 Familias ===================== */
+  --font-display: 'Londrina Solid', 'Arial Narrow', Impact, sans-serif;  /* grita */
+  --font-ui: 'Gabarito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; /* cuenta */
+  --font-figure: 'Fraunces', 'Iowan Old Style', Georgia, serif;         /* retrata */
+
+  /* ===================== §3.2 Escala (celular base 16) ===================== */
+  --font-size-multiplier: 1;         /* 1 · 1,15 · 1,3 (ajustes) */
+  --button-size-multiplier: 1;       /* 1 · 1,15 */
+  --t-scale: 1;                      /* desktop ×1,15 (media query abajo) */
+  --fm: calc(var(--font-size-multiplier) * var(--t-scale)); /* TOKEN NUEVO: producto de los dos */
+
+  --t-legal: 400 calc(10px * var(--fm)) / 1.3 var(--font-ui);
+  --t-legal-ls: 0;
+  --t-chip: 700 calc(12px * var(--fm)) / 1 var(--font-ui);
+  --t-chip-ls: .04em;
+  --t-chip-small: 700 calc(10px * var(--fm)) / 1 var(--font-ui);   /* etiqueta VIRA */
+  --t-label: 500 calc(11px * var(--fm)) / 1 var(--font-ui);
+  --t-label-ls: .06em;
+  --t-body: 500 calc(14px * var(--fm)) / 1.4 var(--font-ui);
+  --t-body-ls: 0;
+  --t-chicana: 600 calc(14px * var(--fm)) / 1.4 var(--font-ui);
+  --t-name: 800 calc(13px * var(--fm)) / 1 var(--font-ui);
+  --t-name-ls: 0;
+  --t-button: 700 calc(14px * var(--fm) * var(--button-size-multiplier)) / 1 var(--font-ui);
+  --t-button-ls: .04em;
+  --t-button-truco: 900 calc(20px * var(--fm) * var(--button-size-multiplier)) / 1 var(--font-display);
+  --t-button-truco-ls: .02em;
+  --t-score: 800 calc(32px * var(--fm)) / 1 var(--font-ui);
+  --t-score-ls: -.01em;
+  --t-value: 800 calc(36px * var(--fm)) / 1 var(--font-ui);
+  --t-value-ls: -.01em;
+  --t-timer: 800 calc(12px * var(--fm)) / 1 var(--font-ui);
+  --t-timer-ls: 0;
+  --t-pill: 700 calc(14px * var(--fm)) / 1 var(--font-ui);
+  --t-pill-ls: .02em;
+  --t-stamp: 900 calc(56px * var(--fm)) / .9 var(--font-display);
+  --t-stamp-ls: .01em;
+  --t-banner: 900 calc(32px * var(--fm)) / 1 var(--font-display);
+  --t-banner-ls: .01em;
+  --t-banner-big: 900 calc(40px * var(--fm)) / 1 var(--font-display);  /* MÃO DE ONZE */
+  --t-victory: 900 calc(72px * var(--fm)) / .9 var(--font-display);
+  --t-victory-ls: .01em;
+  /* --t-card-index y --t-card-figure viven dentro del SVG (cards.js): 18 % y 46 % del alto */
+
+  /* ===================== §4 Espaciado ===================== */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px;  --s-4: 16px;
+  --s-6: 24px; --s-8: 32px; --s-12: 48px;
+  --margin-screen: 24px;             /* placar, botonera */
+  --margin-felt: 14px;               /* paño */
+  --gap-buttons: 8px;
+
+  /* ===================== §4 Radios ===================== */
+  --r-chip: 6px;
+  --r-panel: 8px;
+  --r-card-ui: 12px;
+  --r-modal: 16px;
+  --r-pill: 999px;
+  --r-felt-top: 72px;                /* superelipse paño celular */
+  --r-felt-bottom: 60px;
+  /* --r-card = 7 % del ancho: se calcula dentro del SVG */
+
+  /* ===================== §4 Bordes ===================== */
+  --border-ui: 1px solid var(--border-brass);
+  --border-ghost-w: 1.5px;
+
+  /* ===================== §4 Sombras de cartas (las únicas reales) ===================== */
+  --shadow-card-table: 0 2px 4px rgba(0, 0, 0, .35);
+  --shadow-card-hand: 0 8px 20px rgba(0, 0, 0, .55);
+  --shadow-card-lift: 0 12px 24px rgba(0, 0, 0, .5);
+  --shadow-stamp: 2px 2px 0 var(--brass-dim);  /* sellos: sombra dura */
+  --stamp-tilt: -6deg;
+
+  /* ===================== §4 Alturas tocables ===================== */
+  --h-button: 52px;
+  --h-avatar-me: 56px;
+  --h-avatar: 48px;
+  --h-chat: 40px;
+  --h-touch-min: 44px;
+  --blur-surface: 16px;
+  --blur-scrim: 12px;
+
+  /* ===================== §8.1 Motion ===================== */
+  --speed: 1;                        /* lenta 1,4 · normal 1 · rápida ,7 */
+  --motion-instant: calc(80ms * var(--speed));
+  --motion-short: calc(200ms * var(--speed));
+  --motion-medium: calc(320ms * var(--speed));
+  --motion-long: calc(480ms * var(--speed));
+  --motion-stamp: calc(520ms * var(--speed));
+  --motion-button: calc(150ms * var(--speed));   /* TOKEN NUEVO: botones (§8.2) */
+  --hold-pill: calc(1200ms * var(--speed));
+  --hold-banner: calc(1400ms * var(--speed));
+  --ease-standard: cubic-bezier(.2, 0, 0, 1);
+  --ease-enter: cubic-bezier(.05, .7, .1, 1);
+  --ease-exit: cubic-bezier(.3, 0, .8, .15);
+  --ease-pop: cubic-bezier(.22, 1, .36, 1);
+  --ease-overshoot: cubic-bezier(.34, 1.56, .64, 1);
+  --ease-button: cubic-bezier(.4, 0, .2, 1);
+
+  color-scheme: dark;
+}
+
+/* §3.2 · desktop ×1,15 salvo excepciones explícitas (VALE 44, sello 72, VITÓRIA 96) */
+@media (min-width: 1024px) {
+  :root {
+    --t-scale: 1.15;
+    --t-value: 800 calc(44px * var(--font-size-multiplier)) / 1 var(--font-ui);
+    --t-stamp: 900 calc(72px * var(--font-size-multiplier)) / .9 var(--font-display);
+    --t-victory: 900 calc(96px * var(--font-size-multiplier)) / .9 var(--font-display);
+    --r-felt-top: 96px;
+    --r-felt-bottom: 80px;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   §1.1 / §2.2 · Modo alto contraste: paño más claro, grano apagado.
+   --------------------------------------------------------------------- */
+html[data-contrast="high"] {
+  --felt-hi: var(--felt-hi-contrast);
+  --grain-bar: 0;
+  --grain-felt: 0;
+  --border-brass: rgba(233, 196, 106, .32);  /* TOKEN NUEVO: borde más visible en alto contraste */
+  --ink-lo: #9A8F7C;                          /* TOKEN NUEVO: terciario ≥ 4,5:1 */
+}
+
+/* ---------------------------------------------------------------------
+   Reset mínimo
+   --------------------------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg-bar);
+  color: var(--ink-hi);
+  font: var(--t-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+button, input, select { font: inherit; color: inherit; }
+button { background: none; border: 0; padding: 0; cursor: pointer; }
+img, svg { display: block; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }  /* §1.4 --focus */
+
+/* ---------------------------------------------------------------------
+   §2.1 · .bar: fondo de la app con el cono de luz (::before) y grano (::after)
+   --------------------------------------------------------------------- */
+.bar {
+  position: relative;
+  background: var(--bg-bar);
+  isolation: isolate;
+  --light-cone-alpha: .16;
+  transition: --light-cone-alpha 600ms var(--ease-standard); /* bajada por defecto (truco resuelto) */
+}
+.bar > * { position: relative; z-index: 1; }
+.bar::before {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(ellipse 140% 70% at 50% -10%,
+              rgba(var(--light-color), var(--light-cone-alpha)), transparent 70%);
+}
+@media (min-width: 1024px) {
+  .bar::before {
+    background: radial-gradient(ellipse 90% 60% at 50% 0%,
+                rgba(var(--light-color), var(--light-cone-alpha)), transparent 70%);
+  }
+}
+.bar::after,
+.grain::after {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background: var(--grain-url) repeat;
+  background-size: 256px 256px;
+  mix-blend-mode: overlay;
+  opacity: var(--grain-bar);
+}
+.grain { position: relative; isolation: isolate; }
+
+/* §2.1 · estados de la luz (se aplican en <body>, en .bar o en .mesa) */
+.is-truco-pending { --light-cone-alpha: .26; transition-duration: 300ms; }   /* sube 300, baja 600 */
+.is-onze          { --light-cone-alpha: .24; transition-duration: 250ms; }
+.is-ferro         { --light-cone-alpha: .08; transition-duration: 500ms; }
+.is-victory       { --light-cone-alpha: .30; transition-duration: 400ms; }
+.is-defeat        { --light-cone-alpha: .10; transition-duration: 400ms; }
+.is-manilha-played { animation: lamp-tremble 600ms var(--ease-standard) 1; }   /* +.06, 300 ida y vuelta */
+.is-offline        { animation: lamp-blink 600ms var(--ease-standard) 1; }     /* .16 → .06 → .16 una vez */
+@keyframes lamp-tremble {
+  0%   { --light-cone-alpha: .16; }
+  50%  { --light-cone-alpha: .22; }
+  100% { --light-cone-alpha: .16; }
+}
+@keyframes lamp-blink {
+  0%   { --light-cone-alpha: .16; }
+  50%  { --light-cone-alpha: .06; }
+  100% { --light-cone-alpha: .16; }
+}
+
+/* ---------------------------------------------------------------------
+   §1.1 / §2.1 · Paño (viñeta de la misma lámpara) con grano al 5 %
+   --------------------------------------------------------------------- */
+.felt {
+  position: relative;
+  isolation: isolate;
+  background: radial-gradient(circle at 50% 35%, var(--felt-hi), var(--felt-lo) 85%);
+  border-radius: var(--r-felt-top) var(--r-felt-top) var(--r-felt-bottom) var(--r-felt-bottom);
+  box-shadow: inset 0 0 0 2px var(--felt-edge), inset 0 2px 6px rgba(0, 0, 0, .55);
+}
+.felt::after {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: var(--grain-url) repeat;
+  background-size: 256px 256px;
+  mix-blend-mode: overlay;
+  opacity: var(--grain-felt);
+}
+.felt > * { position: relative; z-index: 1; }
+
+/* ---------------------------------------------------------------------
+   §1.1 / §4 · Superficies (borde + blur, sin sombras)
+   --------------------------------------------------------------------- */
+.surface-1 {
+  background: var(--surface-1);
+  border: var(--border-ui);
+  border-radius: var(--r-panel);
+}
+.surface-2 {
+  background: var(--surface-2);
+  border: var(--border-ui);
+  border-radius: var(--r-panel);
+  backdrop-filter: blur(var(--blur-surface));
+  -webkit-backdrop-filter: blur(var(--blur-surface));
+}
+
+/* ---------------------------------------------------------------------
+   §1.4 / §6.14 · Chip: dato, no gancho
+   --------------------------------------------------------------------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: 28px;
+  padding: 0 var(--s-3);
+  background: var(--chip-bg);
+  border: 1px solid var(--brass);
+  border-radius: var(--r-chip);
+  color: var(--ink-hi);
+  font: var(--t-chip);
+  letter-spacing: var(--t-chip-ls);
+  text-transform: uppercase;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.chip .value, .chip b { color: var(--gold); font-weight: 800; }
+.chip-small { height: 24px; padding: 0 var(--s-2); }
+.chip-vira { height: 14px; padding: 0 6px; font: var(--t-chip-small); color: var(--brass); border-radius: 3px 3px 0 0; } /* --vira-tab 28×14 */
+
+/* ---------------------------------------------------------------------
+   §6.7 / §6.8 / §8.2 · Botones. Una pieza, variantes por color.
+   --------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: calc(var(--h-button) * var(--button-size-multiplier));
+  padding: 0 var(--s-4);
+  border-radius: var(--r-panel);
+  border: var(--border-ghost-w) solid transparent;
+  font: var(--t-button);
+  letter-spacing: var(--t-button-ls);
+  text-transform: uppercase;
+  color: var(--ink-hi);
+  background: transparent;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--motion-button) var(--ease-button),
+              background-color var(--motion-button) var(--ease-button),
+              color var(--motion-button) var(--ease-button),
+              opacity var(--motion-button) var(--ease-button),
+              box-shadow var(--motion-button) var(--ease-button);
+}
+.btn:hover { transform: scale(1.02); }
+.btn:active { transform: scale(.98); }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: .4; pointer-events: none; }
+.btn .key { font: var(--t-chip); color: var(--brass); margin-left: var(--s-1); }  /* atajo de teclado en desktop */
+
+/* TRUCO! · el único botón relleno de la mesa (§1.4 --lamp) */
+.btn-truco {
+  background: var(--lamp);
+  border-color: var(--lamp-edge);
+  color: var(--ink-on-gold);
+  font: var(--t-button-truco);
+  letter-spacing: var(--t-button-truco-ls);
+  text-transform: uppercase;
+  box-shadow: var(--glow-truco);
+  min-width: 134px;
+}
+.btn-truco:hover, .btn-truco:active {
+  background: linear-gradient(180deg, var(--lamp-hot), var(--lamp));
+}
+.btn-truco:active { transform: scale(.98); }
+.btn-truco:disabled { box-shadow: 0 0 0 1px var(--lamp-edge); }
+
+/* Fantasmas: borde 1,5 px + texto; relleno sólo en press */
+.btn-ghost-run { border-color: var(--run); color: var(--run); }
+.btn-ghost-run:active { background: var(--run); color: var(--ink-hi); }
+.btn-ghost-ok { border-color: var(--ok); color: var(--ok); }
+.btn-ghost-ok:active { background: var(--ok); color: var(--ink-on-gold); }
+.btn-ghost-brass { border-color: var(--brass); color: var(--ink-mid); }
+.btn-ghost-brass:active { background: var(--brass); color: var(--ink-hi); }
+.btn-ghost-run:hover { background: rgba(217, 65, 78, .10); }   /* TOKEN NUEVO: hover fantasma al 10 % */
+.btn-ghost-ok:hover { background: rgba(111, 211, 154, .10); }
+.btn-ghost-brass:hover { background: rgba(140, 115, 66, .14); }
+
+/* Relleno ok: JOGAR (vale 3) en mão de onze */
+.btn-fill-ok { background: var(--ok-deep); border-color: var(--ok-deep); color: var(--ink-hi); }
+.btn-fill-ok:hover { background: color-mix(in srgb, var(--ok-deep) 85%, var(--ok)); }
+.btn-fill-ok:active { background: var(--ok-deep); }
+
+/* ---------------------------------------------------------------------
+   §6.11 · Píldora de rodada (lower third)
+   --------------------------------------------------------------------- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 var(--s-4);
+  border-radius: var(--r-pill);
+  font: var(--t-pill);
+  letter-spacing: var(--t-pill-ls);
+  text-transform: uppercase;
+  color: var(--ink-hi);
+  background: var(--surface-2);
+  white-space: nowrap;
+}
+.pill-us { background: var(--ok-deep); }
+.pill-them { background: var(--team-them-deep); }
+.pill-tie { background: var(--tie); color: var(--ink-on-gold); }
+.pill-name { height: 20px; padding: 0 var(--s-2); font: var(--t-name); text-transform: none; background: var(--chip-bg); border: 1px solid var(--border-brass); } /* píldora de nombre */
+
+/* ---------------------------------------------------------------------
+   §4 / §6.10 · Sello de grito: letrero pintado, tilt −6°, sombra dura.
+   (El borde irregular en SVG lo construye el componente que lo usa.)
+   --------------------------------------------------------------------- */
+.stamp {
+  display: inline-block;
+  font: var(--t-stamp);
+  letter-spacing: var(--t-stamp-ls);
+  text-transform: uppercase;
+  color: var(--lamp);
+  text-shadow: var(--shadow-stamp);
+  transform: rotate(var(--stamp-tilt));
+  transform-origin: 50% 60%;
+  white-space: nowrap;
+}
+.stamp-truco { color: var(--lamp); }
+.stamp-ok { color: var(--ok); }
+.stamp-run { color: var(--run); }
+.stamp-tie { color: var(--tie); }
+.stamp-small { font: 900 calc(40px * var(--fm)) / .9 var(--font-display); } /* EMPACHOU! a 40 */
+
+/* ---------------------------------------------------------------------
+   §6.17 · Toast
+   --------------------------------------------------------------------- */
+.toast {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  max-width: 342px;
+  padding: var(--s-3) var(--s-4);
+  background: var(--surface-2);
+  border: var(--border-ui);
+  border-radius: var(--r-panel);
+  backdrop-filter: blur(var(--blur-surface));
+  -webkit-backdrop-filter: blur(var(--blur-surface));
+  font: var(--t-body);
+  color: var(--ink-hi);
+}
+.toast-danger { color: var(--run-text); }
+.toast-ok { color: var(--ok); }
+
+/* ---------------------------------------------------------------------
+   §1.1 · Scrim: sobre la mesa en resultado y reconexión
+   --------------------------------------------------------------------- */
+.scrim {
+  position: absolute; inset: 0;
+  background: var(--scrim);
+  backdrop-filter: blur(var(--blur-scrim));
+  -webkit-backdrop-filter: blur(var(--blur-scrim));
+}
+
+/* ---------------------------------------------------------------------
+   §6.19 · Pie legal, en todas las pantallas
+   --------------------------------------------------------------------- */
+.legal {
+  font: var(--t-legal);
+  color: var(--ink-lo);
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------------
+   §3 · Utilidades de texto
+   --------------------------------------------------------------------- */
+.t-label  { font: var(--t-label);  letter-spacing: var(--t-label-ls);  text-transform: uppercase; color: var(--ink-mid); }
+.t-chip   { font: var(--t-chip);   letter-spacing: var(--t-chip-ls);   text-transform: uppercase; }
+.t-body   { font: var(--t-body); }
+.t-name   { font: var(--t-name); }
+.t-score  { font: var(--t-score);  letter-spacing: var(--t-score-ls);  font-variant-numeric: tabular-nums; }
+.t-value  { font: var(--t-value);  letter-spacing: var(--t-value-ls);  font-variant-numeric: tabular-nums; color: var(--gold); }
+.t-timer  { font: var(--t-timer);  font-variant-numeric: tabular-nums; }
+.t-banner { font: var(--t-banner); letter-spacing: var(--t-banner-ls); text-transform: uppercase; }
+.t-victory {
+  font: var(--t-victory); letter-spacing: var(--t-victory-ls); text-transform: uppercase;
+  background: var(--gold-gradient);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.num { font-variant-numeric: tabular-nums; }
+
+/* ---------------------------------------------------------------------
+   §8.3.7 · Reduce motion y "Animações: desligadas"
+   --------------------------------------------------------------------- */
+/* Cambio chico (mesa.html): html[data-motion="on"] fuerza las animaciones aunque el sistema pida reducirlas;
+   sin ese atributo (o con "auto"/"off") se respeta prefers-reduced-motion como antes. */
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion="on"]) { --speed: .01; }
+  html:not([data-motion="on"]) *, html:not([data-motion="on"]) *::before, html:not([data-motion="on"]) *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+  html:not([data-motion="on"]) .btn:hover, html:not([data-motion="on"]) .btn:active { transform: none; }
+}
+html[data-motion="off"] { --speed: .01; }
+html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="off"] *::after {
+  animation-duration: 1ms !important;
+  transition-duration: 1ms !important;
+}

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14100C">
+<title>Beleza Truco · truco paulista e mineiro</title>
+<meta name="description" content="Truco paulista e mineiro, 1x1 e 2x2, no celular. Mesas com valor definido por você, depósito e saque por Pix. Maiores de 18.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@400..900&family=Londrina+Solid:wght@400;900&family=Fraunces:opsz,wght@9..144,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body class="bar">
+<div class="watermark" aria-hidden="true">TRUCO</div>
+
+<div class="app public">
+  <header class="app-hdr">
+    <a class="brand" href="home.html" aria-label="Beleza Truco, início">Beleza Truco</a>
+    <div class="mid"></div>
+    <a class="btn btn-ghost-brass sm" href="lobby.html" style="border:var(--border-ghost-w) solid">Entrar</a>
+  </header>
+
+  <main>
+    <!-- Hero: la lámpara sobre un paño chico, tres cartas, un grito. Londrina en pantalla: "Beleza Truco" + "TRUCO!" = 3 palabras. -->
+    <section class="hero">
+      <div>
+        <h1>Truco paulista e mineiro, <b>1x1 e 2x2</b>, no seu celular.</h1>
+        <p style="margin-top:12px">Mesas com valor definido por você, taxa informada antes de sentar, depósito e saque por Pix. As regras de sempre: vira, manilha, mão de onze, mão de ferro.</p>
+        <div class="hero-cta" style="margin-top:20px">
+          <a class="btn btn-fill-ok" href="lobby.html">Criar conta</a>
+          <a class="btn btn-ghost-brass" href="mesa.html">Ver uma mesa</a>
+        </div>
+        <p class="note lo" style="margin-top:10px">Cadastro com CPF e verificação de idade. Só maiores de 18.</p>
+      </div>
+      <div class="hero-felt" aria-label="Mesa de truco com três cartas">
+        <div class="felt">
+          <div class="hero-stamp"><span class="stamp stamp-truco">Truco!</span></div>
+          <div class="hero-chips" aria-hidden="true">
+            <span class="chip">Paulista · 2x2 · <b>R$ 2,00</b> · taxa 7 %</span>
+            <span class="chip">Manilha <b>7</b> ♣ ♥ ♠ ♦</span>
+          </div>
+          <div class="hero-cards" id="hero-cards"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Como funciona -->
+    <section class="sec">
+      <div class="sec-head"><h2>Como funciona</h2></div>
+      <ol class="steps">
+        <li><div><b>Crie sua conta</b><p>Nome, CPF e data de nascimento. A verificação de identidade libera o saque.</p></div></li>
+        <li><div><b>Escolha a mesa</b><p>Paulista ou mineiro, 1x1 ou 2x2, valor por jogador e taxa, tudo à vista antes de sentar.</p></div></li>
+        <li><div><b>Jogue</b><p>TRUCO, SEIS, NOVE e DOZE. Placar NÓS e ELES sempre no mesmo lugar, vazas guardadas no banco.</p></div></li>
+      </ol>
+    </section>
+
+    <!-- Regras: dato, con los chips de la mesa -->
+    <section class="sec">
+      <div class="sec-head"><h2>As regras que você conhece</h2></div>
+      <div class="facts">
+        <div class="panel surface-1"><b>Paulista</b><span>Vira define a manilha. Cadeia 1 · 3 · 6 · 9 · 12. Mão de onze e mão de ferro.</span></div>
+        <div class="panel surface-1"><b>Mineiro</b><span>Manilhas fixas 4♣ 7♥ A♠ 7♦. Cadeia 2 · 4 · 6 · 10 · 12. Mão de dez.</span></div>
+        <div class="panel surface-1"><b>2x2 com sinais</b><span>Quatro sinais para o parceiro, com significado sorteado a cada mão. Sem chat livre.</span></div>
+        <div class="panel surface-1"><b>Tempo por jogada</b><span>10, 20 ou 30 segundos. Se o tempo acaba, o sistema joga a carta mais fraca por você.</span></div>
+      </div>
+    </section>
+
+    <!-- Transparencia: valor, taxa, Pix, jogo responsável -->
+    <section class="sec">
+      <div class="sec-head"><h2>Transparente do começo ao fim</h2></div>
+      <div class="panel surface-1">
+        <div class="kv"><span>Valor da mesa</span><b>de R$ 0,50 a R$ 50,00 por jogador</b></div>
+        <div class="kv"><span>Taxa</span><b>6 % a 8 %, informada no chip da mesa</b></div>
+        <div class="kv"><span>Reserva</span><b>o valor fica reservado ao sentar e é liquidado no fim</b></div>
+        <div class="kv"><span>Depósito e saque</span><b>Pix, mesmo CPF do cadastro</b></div>
+        <div class="kv"><span>Jogo responsável</span><b>limites próprios, pausa e autoexclusão</b></div>
+        <div class="kv"><span>Prática</span><b>mesa de treino com robôs, sem valor em jogo</b></div>
+      </div>
+    </section>
+
+    <section class="sec" style="text-align:center;padding:8px 0 0">
+      <a class="btn btn-fill-ok" href="lobby.html" style="border:var(--border-ghost-w) solid;min-width:220px">Criar conta</a>
+      <p class="note lo" style="margin-top:10px">Só maiores de 18. Cadastro com CPF.</p>
+    </section>
+
+    <div class="foot-links">
+      <a href="#">Termos de uso</a><a href="#">Privacidade</a><a href="#">Regulamento do ranking</a><a href="#">Jogo responsável</a><a href="#">Ajuda</a>
+    </div>
+  </main>
+
+  <p class="legal legal-app">O jogo pode ser viciante. Jogue com responsabilidade. 18+.</p>
+</div>
+
+<script src="cards.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  /* Tres cartas de la mano con la manilha invertida (vira 6 → manilha 7): la regla §5.4 también enseña en la home */
+  var w = window.matchMedia('(min-width: 1024px)').matches ? 120 : 104;
+  document.getElementById('hero-cards').innerHTML = [
+    { rank: 'J', suit: 'espadas' },
+    { rank: '7', suit: 'paus', manilha: true, zap: true },
+    { rank: '3', suit: 'copas' }
+  ].map(function (c) { c.w = w; return '<span class="card">' + window.BT.cardSVG(c) + '</span>'; }).join('');
+})();
+</script>
+</body>
+</html>

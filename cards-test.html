@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Beleza Truco · teste do baralho</title>
+<!-- DESIGN §3.1 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@400..900&family=Londrina+Solid:wght@400;900&family=Fraunces:opsz,wght@9..144,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  /* Sólo layout de la página de prueba; nada de esto es sistema. */
+  .page { min-height: 100vh; padding: var(--s-6) var(--margin-screen) var(--s-12); }
+  .page > * { position: relative; z-index: 1; }
+  h1 { font: var(--t-banner); letter-spacing: var(--t-banner-ls); text-transform: uppercase; color: var(--gold); margin: 0 0 var(--s-1); }
+  h2 { font: var(--t-label); letter-spacing: var(--t-label-ls); text-transform: uppercase; color: var(--ink-mid); margin: var(--s-8) 0 var(--s-3); }
+  .sub { color: var(--ink-lo); margin: 0 0 var(--s-4); }
+  .row { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: flex-end; }
+  .row.hand { gap: var(--s-3); }
+  .row > svg { flex: 0 0 auto; }
+  .card-hand { box-shadow: var(--shadow-card-hand); border-radius: 7%; }
+  .card-table { box-shadow: var(--shadow-card-table); border-radius: 7%; }
+  .suit-row { margin-bottom: var(--s-2); }
+  .felt-box { padding: var(--s-4); display: inline-flex; flex-wrap: wrap; gap: var(--s-2); align-items: flex-end; max-width: 100%; }
+  .on-back { position: relative; display: inline-block; }
+  .on-back .over { position: absolute; left: 35%; top: 22%; }
+  .stack { display: inline-flex; gap: var(--s-2); align-items: flex-end; }
+  .caption { font: var(--t-chip); letter-spacing: var(--t-chip-ls); text-transform: uppercase; color: var(--brass); margin: var(--s-2) 0 var(--s-1); }
+  .meta { display: flex; gap: var(--s-2); flex-wrap: wrap; margin-bottom: var(--s-4); }
+  .toggle { display: inline-flex; gap: var(--s-2); align-items: center; font: var(--t-body); color: var(--ink-mid); }
+</style>
+</head>
+<body class="bar">
+<div class="page">
+  <h1>Baralho · 40 peças</h1>
+  <p class="sub">DESIGN §5 · proporção 0,68 · índice Gabarito 800 · figuras Fraunces 700 · pips próprios</p>
+  <div class="meta">
+    <span class="chip">Paulista · 2x2 · <b>R$ 2,00</b> · taxa 7 %</span>
+    <label class="toggle"><input type="checkbox" id="rule"> Régua de força</label>
+    <label class="toggle"><input type="checkbox" id="hc"> Alto contraste</label>
+  </div>
+
+  <h2>Mazo completo · 104 px (mano)</h2>
+  <div id="deck"></div>
+
+  <h2>Vira 7 → manilha Q (paulista)</h2>
+  <p class="sub">Ouros 1 · espadas 2 · copas 3 · paus 4 (zap, com moldura acesa)</p>
+  <div class="row hand" id="manilhas-q"></div>
+
+  <h2>Vira K → manilha A</h2>
+  <div class="row hand" id="manilhas-a"></div>
+
+  <h2>Mineiro · manilhas fixas 4♣ 7♥ A♠ 7♦</h2>
+  <div class="row hand" id="mineiro"></div>
+
+  <h2>Dorso · 104 · 56 · 48 · 28 · 22</h2>
+  <p class="sub">Um só anel de 1 px e monograma em Londrina Solid 900. A 22 px tem que ser textura, não ficha.</p>
+  <div class="row hand" id="backs"></div>
+  <h2>Dorso em contexto · mão de ferro (três cartas viradas a 104)</h2>
+  <div class="row hand" id="backs-hand"></div>
+
+  <h2>Leitura §5.4.6 · 56 px (cruz) e 28 px (banco) sobre o pano</h2>
+  <div class="felt felt-box" id="felt56"></div>
+  <div style="height:8px"></div>
+  <div class="felt felt-box" id="felt28"></div>
+
+  <h2>Leitura · manilha sobre um dorso</h2>
+  <div class="felt felt-box" id="onback"></div>
+
+  <p class="legal" style="margin-top:48px">O jogo pode ser viciante. Jogue com responsabilidade. 18+.</p>
+</div>
+
+<script src="cards.js"></script>
+<script>
+  /* Página de prueba: arma las secciones con BT.cardSVG. */
+  (function () {
+    var BT = window.BT;
+    var SUIT_SYM = { ouros: '♦', espadas: '♠', copas: '♥', paus: '♣' };
+    var rule = false;
+
+    function el(id) { return document.getElementById(id); }
+    function card(o, cls) {
+      o.rule = rule;
+      if (cls) o.cls = cls;
+      return BT.cardSVG(o);
+    }
+
+    function render() {
+      /* Mazo completo, una fila por palo */
+      var deck = '';
+      BT.SUITS.forEach(function (suit) {
+        deck += '<div class="caption">' + suit + ' ' + SUIT_SYM[suit] + '</div><div class="row suit-row">';
+        BT.RANKS.forEach(function (rank) { deck += card({ rank: rank, suit: suit, w: 104 }, 'card-hand'); });
+        deck += '</div>';
+      });
+      el('deck').innerHTML = deck;
+
+      /* Manilhas para vira 7 (Q) y vira K (A) */
+      function manilhaRow(rank) {
+        var out = '';
+        BT.SUITS.forEach(function (suit) {
+          out += card({ rank: rank, suit: suit, w: 104, manilha: true, zap: suit === 'paus' }, 'card-hand');
+        });
+        /* al lado, la misma carta común para comparar */
+        out += '<span style="width:16px"></span>' + card({ rank: rank, suit: 'paus', w: 104 }, 'card-hand');
+        return out;
+      }
+      el('manilhas-q').innerHTML = manilhaRow(BT.manilhaFor('7'));
+      el('manilhas-a').innerHTML = manilhaRow(BT.manilhaFor('K'));
+
+      /* Mineiro: fijas */
+      var mi = '';
+      BT.MINEIRO_FIXED.forEach(function (c) {
+        mi += card({ rank: c.rank, suit: c.suit, w: 104, manilha: true, zap: c.suit === 'paus' }, 'card-hand');
+      });
+      el('mineiro').innerHTML = mi;
+
+      /* Dorso a los cuatro tamaños */
+      el('backs').innerHTML = [104, 56, 48, 28, 22].map(function (w) { return card({ back: true, w: w }, 'card-hand'); }).join('');
+      /* Tres dorsos a 104 como en la mano propia de mão de ferro (E-31): el medallón no puede leerse como ficha */
+      el('backs-hand').innerHTML = [0, 1, 2].map(function () { return card({ back: true, w: 104 }, 'card-hand'); }).join('');
+
+      /* Lectura a 56 y 28 contra el paño: comunes + manilhas + dorso */
+      function readingRow(w, cls) {
+        var out = '';
+        ['4', '7', 'Q', 'J', 'K', 'A', '2', '3'].forEach(function (r, i) {
+          out += card({ rank: r, suit: BT.SUITS[i % 4], w: w }, cls);
+        });
+        out += '<span style="width:12px"></span>';
+        BT.SUITS.forEach(function (suit) {
+          out += card({ rank: 'A', suit: suit, w: w, manilha: true, zap: suit === 'paus' }, cls);
+        });
+        out += '<span style="width:12px"></span>' + card({ back: true, w: w }, cls);
+        return out;
+      }
+      el('felt56').innerHTML = readingRow(56, 'card-table');
+      el('felt28').innerHTML = readingRow(28, 'card-table');
+
+      /* Manilha encima de un dorso (coberta al lado), a 56 y 28 */
+      var ob = '';
+      [56, 28].forEach(function (w) {
+        ob += '<span class="stack">' +
+          '<span class="on-back">' + card({ back: true, w: w }, 'card-table') +
+            '<span class="over">' + card({ rank: 'A', suit: 'paus', w: w, manilha: true, zap: true }, 'card-table') + '</span></span>' +
+          '<span class="on-back">' + card({ back: true, w: w }, 'card-table') +
+            '<span class="over">' + card({ rank: 'A', suit: 'ouros', w: w, manilha: true }, 'card-table') + '</span></span>' +
+          '<span class="on-back">' + card({ back: true, w: w }, 'card-table') +
+            '<span class="over">' + card({ rank: '3', suit: 'copas', w: w }, 'card-table') + '</span></span>' +
+          '</span><span style="width:24px"></span>';
+      });
+      el('onback').innerHTML = ob;
+    }
+
+    el('rule').addEventListener('change', function (e) { rule = e.target.checked; render(); });
+    el('hc').addEventListener('change', function (e) {
+      if (e.target.checked) document.documentElement.setAttribute('data-contrast', 'high');
+      else document.documentElement.removeAttribute('data-contrast');
+    });
+    render();
+  })();
+</script>
+</body>
+</html>

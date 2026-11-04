@@ -1,0 +1,801 @@
+/* =====================================================================
+   Beleza Truco · mesa.css
+   Layout y componentes de la mesa jugable (mesa.html). Fuente de verdad:
+   DESIGN.md §4 (espaciado), §6 (componentes), §7 (mapa: celular 390×844 y
+   desktop 1440×900), §8 (motion). Los tokens viven en tokens.css; acá
+   sólo se derivan y se marca "TOKEN NUEVO" cuando falta uno.
+
+   Estrategia de layout: el escenario (.stage) tiene el tamaño exacto del
+   mapa (390×844 o 1440×900) y se escala con transform para entrar en la
+   ventana. Así las coordenadas de §7 se escriben literalmente en px.
+
+   La caja de layout NUNCA supera el viewport: el body es un contenedor
+   fixed que ocupa la ventana y el escenario va absoluto adentro, con
+   transform-origin 0 0 y un desplazamiento (--ox/--oy) calculado en JS
+   (fitStage). Antes el escenario de 844 px centrado por grid desbordaba
+   un viewport de 640 px y Chrome móvil hacía zoom-out automático.
+   ===================================================================== */
+
+html, body { height: 100%; }
+body.bar {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  margin: 0;
+}
+/* el grano del body debe quedar debajo del escenario (z 1); tokens.css ya lo pone en z 2 */
+body.bar::after { z-index: 0; }
+
+.stage {
+  --W: 390px; --H: 844px;
+  --scale: 1; --ox: 0px; --oy: 0px;
+  position: absolute; left: 0; top: 0;
+  width: var(--W);
+  height: var(--H);
+  transform: translate(var(--ox), var(--oy)) scale(var(--scale));
+  transform-origin: 0 0;
+  /* el encaje del escenario es layout, no motion: nunca se transiciona (tokens.css pone transition-duration en todo
+     con reduce-motion, y una pestaña en segundo plano dejaría la transición de transform congelada) */
+  transition: none !important;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.stage[data-layout="desktop"] { --W: 1440px; --H: 900px; }
+.stage > * { position: absolute; }
+
+/* Screen shake (§8.2: único shake junto con la manilha; 250 ms, 3 px) */
+@keyframes stage-shake {
+  0% { translate: 0 0; } 20% { translate: 3px -2px; } 40% { translate: -3px 2px; }
+  60% { translate: 2px 3px; } 80% { translate: -2px -3px; } 100% { translate: 0 0; }
+}
+.stage.is-shaking { animation: stage-shake calc(250ms * var(--speed)) var(--ease-standard) 1; }
+
+/* ---------------------------------------------------------------------
+   §7.2 Marca de agua del letrero (sólo desktop)
+   --------------------------------------------------------------------- */
+.watermark {
+  display: none;
+  left: -70px; bottom: 30px;
+  font: 900 420px / 1 var(--font-display);
+  letter-spacing: .02em;
+  color: transparent;
+  -webkit-text-stroke: 2px var(--gold);
+  opacity: .06;
+  pointer-events: none;
+  z-index: 0;
+}
+.stage[data-layout="desktop"] .watermark { display: block; }
+
+/* ---------------------------------------------------------------------
+   §7.1 Header: 12–378 × 47–91
+   --------------------------------------------------------------------- */
+.hdr {
+  left: 12px; top: 47px; width: 366px; height: 44px;
+  display: flex; align-items: center; justify-content: space-between;
+  z-index: 5;
+}
+.icon-btn {
+  width: 40px; height: 40px;
+  flex: 0 0 40px; /* con "Tamanho da fonte: Maior" el chip crecía y aplastaba Sair/Ajustes a 27 px (mínimo tocable 44) */
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--r-panel);
+  color: var(--ink-mid);
+  border: 1px solid transparent;
+  transition: color var(--motion-button) var(--ease-button), background-color var(--motion-button) var(--ease-button);
+}
+.icon-btn:hover { color: var(--ink-hi); background: rgba(233, 196, 106, .06); border-color: var(--border-brass); }
+/* El chip de mesa es dato, no gancho (§6.14): NO escala con --font-size-multiplier (sólo con el ×1,15 de desktop),
+   así nunca desborda los 180 px ni aplasta los botones del header; min-width 0 + overflow como red de seguridad. */
+.mesa-chip { height: 28px; flex: 0 1 auto; min-width: 0; overflow: hidden; font-size: calc(12px * var(--t-scale)); }
+
+/* ---------------------------------------------------------------------
+   §6.5 Placar de transmissão: 24–366 × 99–167 (342×68)
+   --------------------------------------------------------------------- */
+.placar {
+  left: 24px; top: 99px; width: 342px; height: 68px;
+  display: grid;
+  grid-template-columns: 110px 1fr 110px;
+  align-items: stretch;
+  z-index: 4;
+  padding: 0;
+  /* TOKEN NUEVO: el placar tiene 68 px fijos y con el multiplicador 1,3 sus textos no entran (pontos 41 + etiqueta 14 +
+     puntos 8 + aire). Los textos del placar escalan con un multiplicador TOPE de 1,15 (sigue siendo "más grande" en el
+     ajuste Maior) y el aire vertical se ajusta en función del multiplicador para que todo quede dentro de los 68 px. */
+  --fm-pl: calc(min(var(--font-size-multiplier), 1.15) * var(--t-scale));
+  --pl-pad: clamp(2px, calc(6px - (var(--font-size-multiplier) - 1) * 14px), 6px);
+}
+.pl-side {
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: var(--pl-pad) 10px;
+  gap: 0;
+}
+.pl-us { text-align: left; }
+.pl-them { text-align: right; }
+.pl-label { display: block; font-size: calc(11px * var(--fm-pl)); }
+.pl-row { display: inline-flex; align-items: center; gap: 6px; }
+.pl-pts {
+  color: var(--team-us);
+  display: inline-block;
+  line-height: 1;
+  font-size: calc(32px * var(--fm-pl));
+  transition: transform var(--motion-medium) var(--ease-overshoot);
+}
+/* §6.5: avatares de 20 px en el placar, sólo en 1v1 (VOCÊ · ELE): inicial + anillo de equipo de 2 px */
+.pl-avatar {
+  display: none; width: 20px; height: 20px; border-radius: 50%; flex: 0 0 20px;
+  place-items: center;
+  background: radial-gradient(circle at 50% 30%, #3A2F25, var(--surface-2) 70%); /* misma piel que .avatar */
+  box-shadow: 0 0 0 2px var(--team-us);
+  font: 800 9px / 1 var(--font-ui); color: var(--gold); text-transform: uppercase;
+}
+.pl-avatar.them { box-shadow: 0 0 0 2px var(--team-them); color: var(--ink-mid); }
+.stage[data-mode="1v1"] .pl-avatar { display: grid; }
+.pl-them .pl-pts { color: var(--team-them); }
+.pl-us { align-items: flex-start; }
+.pl-them { align-items: flex-end; }
+.pl-dots { display: inline-flex; gap: 5px; margin-top: auto; height: 8px; }
+.pl-dots i {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(233, 196, 106, .12);           /* TOKEN NUEVO: punto de rodada vacío (oro al 12 %) */
+  border: 1px solid var(--border-brass);
+  transition: background-color var(--motion-short) var(--ease-standard);
+}
+.pl-dots i.us { background: var(--team-us); border-color: var(--team-us); }
+.pl-dots i.them { background: var(--team-them); border-color: var(--team-them); }
+.pl-dots i.tie { background: var(--tie); border-color: var(--tie); }
+@keyframes dot-pop { 0% { transform: scale(.4); } 70% { transform: scale(1.3); } 100% { transform: scale(1); } }
+.pl-dots i.pop { animation: dot-pop calc(180ms * var(--speed)) var(--ease-overshoot) 1; }
+
+.pl-center {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px;
+  border-left: 1px solid var(--border-brass);
+  border-right: 1px solid var(--border-brass);
+  padding: 2px 6px;
+}
+.pl-vale {
+  display: inline-block;
+  font-size: calc(36px * var(--fm-pl));
+  transition: transform calc(250ms * var(--speed)) var(--ease-overshoot), color var(--motion-short);
+}
+.stage[data-layout="desktop"] .pl-vale { font-size: calc(44px * min(var(--font-size-multiplier), 1.1)); } /* tope 1,1: con 1,15 el chip MANILHAS FIXAS tocaba el borde inferior del placar de 76 */
+.pl-vale.pulse { transform: scale(1.12); }
+.pl-vale.pending { animation: vale-blink calc(1000ms * var(--speed)) steps(1) infinite; }
+@keyframes vale-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: .55; } }
+.pl-vale-row { display: flex; align-items: baseline; gap: 6px; line-height: 1; }
+/* Mano especial: la etiqueta va en dos renglones intencionales, "MÃO DE ONZE" (10 px, oro) arriba y "VALE" abajo,
+   al lado del dígito de 36 px; antes "MÃO DE ONZE · VALE" se partía solo dentro de los 120 px del centro. */
+.pl-vale-row.special { align-items: center; }
+.pl-vale-row.special .pl-label { display: flex; flex-direction: column; gap: 3px; text-align: right; }
+.pl-label .top { font-size: calc(10px * var(--fm-pl)); letter-spacing: .04em; color: var(--gold); white-space: nowrap; } /* TOKEN NUEVO: etiqueta de mano especial 10/500 */
+.chip-manilha {
+  height: 20px; min-width: 96px; padding: 0 8px; gap: 4px;
+  font: var(--t-chip-small); letter-spacing: var(--t-chip-ls);
+  font-size: calc(10px * var(--fm-pl));
+  justify-content: center;
+}
+.chip-manilha { position: relative; }
+/* Remate de la guía VIRA → MANILHA: tick de 4 px hacia abajo bajo el chip (§5.5); la línea se desvanece antes del parceiro */
+.chip-manilha:not(.fixed)::after { content: ""; position: absolute; left: 50%; top: 100%; width: 1px; height: 4px; background: var(--brass); opacity: 0; transition: opacity var(--motion-short); }
+.stage.vira-shown .chip-manilha:not(.fixed)::after { opacity: .7; }
+.chip-manilha .suits { display: inline-flex; gap: 2px; font-size: calc(11px * var(--fm-pl)); color: var(--ink-lo); }
+.chip-manilha .suits i { font-style: normal; transition: color var(--motion-short); }
+.chip-manilha .suits i.have { color: var(--gold); }
+.chip-manilha.fixed .suits { display: none; }
+/* Mineiro: "MANILHAS FIXAS · 4♣ 7♥ A♠ 7♦" no entra en 122 px en una línea: va en dos renglones de 9 px */
+.chip-manilha.fixed { flex-direction: column; height: auto; max-height: 22px; min-width: 0; max-width: 100%; padding: 1px 8px; gap: 1px; line-height: 1; font-size: 9px; letter-spacing: .03em; }
+/* En mineiro el chip de dos renglones (24 px) + VALE con tope 1,15 (41 px) sólo entran en 68 si el centro no suma aire */
+.stage[data-variant="mineiro"] .pl-center { gap: 1px; padding: 1px 6px; }
+.pl-center { min-width: 0; }
+.chip-manilha.onze { color: var(--gold); }
+
+/* Dígito que rueda (§6.5 value-change 400 ms) */
+@keyframes digit-roll {
+  0% { transform: translateY(0); opacity: 1; }
+  45% { transform: translateY(-.6em); opacity: 0; }
+  55% { transform: translateY(.6em); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.roll { animation: digit-roll calc(400ms * var(--speed)) var(--ease-standard) 1; }
+
+/* ---------------------------------------------------------------------
+   §6.11 Píldora de rodada: montada sobre el borde inferior del placar (lower
+   third), desde el lado del equipo que ganó. Medido en 390×844: en y 171 con
+   el texto largo ("NÓS LEVAMOS A RODADA", 202 px) pisaba el avatar del
+   parceiro (171–219 × 187–235), su anillo de turno y su contador de dorsos
+   (227–277 × 195–227) justo cuando E-13 le da el turno. Ahora: y 162–194
+   (entre los puntos de rodada, que terminan en 161, y los dorsos, que
+   empiezan en 195) y ancho máximo 136 px desde cada lado, fuera de la
+   columna x 160–230 del avatar; el texto es corto ("NÓS LEVAMOS"). El empate
+   ("EMPACHOU!") va a la franja libre entre los bancos (centro y 545), igual
+   que el sello .low. Pendiente: actualizar DESIGN §7.1 (y 162) y §6.11.
+   --------------------------------------------------------------------- */
+.pill-rodada {
+  top: 162px;
+  max-width: 136px;
+  padding: 0 12px;
+  z-index: 6;
+  opacity: 0;
+  pointer-events: none;
+  transition-property: none; /* la posición cambia por clase (from-us / from-them / from-tie); la entrada la anima mesa.js (WAAPI) */
+}
+.pill-rodada.from-us { left: 24px; border-top-left-radius: 0; }
+.pill-rodada.from-them { right: 24px; border-top-right-radius: 0; }
+.pill-rodada.from-tie { left: 50%; top: 529px; translate: -50% 0; }
+
+/* ---------------------------------------------------------------------
+   §7.1 Paño: 14–376 × 175–575 (362×400). rail 10 + brass-line + felt-edge
+   --------------------------------------------------------------------- */
+.mesa-frame {
+  --rail-w: 10px;
+  --rt: var(--r-felt-top); --rb: var(--r-felt-bottom);
+  left: 14px; top: 175px; width: 362px; height: 400px;
+  padding: var(--rail-w);
+  background: var(--rail);
+  border-radius: calc(var(--rt) + var(--rail-w)) calc(var(--rt) + var(--rail-w)) calc(var(--rb) + var(--rail-w)) calc(var(--rb) + var(--rail-w));
+  box-shadow: inset 0 1px 0 rgba(255, 227, 161, .10), inset 0 -1px 0 rgba(0, 0, 0, .5); /* TOKEN NUEVO: la lámpara toca el rail arriba */
+  z-index: 1;
+}
+.mesa-frame .felt { width: 100%; height: 100%; }
+.brass-draw, .brass-hi {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  pointer-events: none; overflow: visible;
+}
+.brass-draw path { fill: none; stroke: var(--brass-line); stroke-width: 1px; }
+.brass-hi path { fill: none; stroke: var(--brass-line-hi); stroke-width: 1px; opacity: .35; }
+.brass-draw { z-index: 2; } .brass-hi { z-index: 2; }
+
+/* ---------------------------------------------------------------------
+   Capa de juego (coordenadas del escenario, no del paño)
+   --------------------------------------------------------------------- */
+.table-layer { inset: 0; pointer-events: none; z-index: 3; }
+.table-layer > * { position: absolute; pointer-events: auto; }
+.vira-line { inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+/* La guía sale de la pestaña VIRA hacia el chip y se desvanece (.7 → 0) en 56 px, antes de llegar al slot del parceiro:
+   "entra" detrás del compañero en vez de cruzar la mesa como un hilo. El chip MANILHA la remata con un tick de 4 px. */
+.vira-line line { stroke: url(#vira-grad); stroke-width: 1px; opacity: 0; }
+.vira-line line.shown { opacity: .7; }
+.vira-line stop { stop-color: var(--brass); }
+
+/* ---------------------------------------------------------------------
+   §6.6 Avatar con turno
+   --------------------------------------------------------------------- */
+.seat {
+  --av: 48px; --ring: 3px; --cx: 0px; --cy: 0px;
+  left: calc(var(--cx) - var(--av) / 2);
+  top: calc(var(--cy) - var(--av) / 2);
+  width: var(--av); height: var(--av);
+  z-index: 3;
+}
+.seat[hidden] { display: none; }
+.avatar {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 30%, #3A2F25, var(--surface-2) 70%); /* TOKEN NUEVO: piel del avatar (surface-2 iluminada arriba) */
+  box-shadow: 0 0 0 var(--ring) var(--team-them);
+  display: grid; place-items: center;
+  font: 800 calc(var(--av) * .42) / 1 var(--font-ui);
+  color: var(--ink-mid);
+  transition: transform calc(240ms * var(--speed)) var(--ease-standard), box-shadow var(--motion-short) var(--ease-standard);
+}
+.seat-us .avatar { box-shadow: 0 0 0 var(--ring) var(--team-us); color: var(--gold); }
+.seat.active .avatar { transform: scale(1.12); }
+.seat.me { --av: 56px; --ring: 4px; z-index: 6; }
+.seat .pill-name {
+  position: absolute; left: 50%; top: 100%;
+  translate: -50% 0;
+  white-space: nowrap;
+  color: var(--ink-mid);
+  transition: color var(--motion-short);
+}
+.seat.active .pill-name, .seat-us .pill-name { color: var(--ink-hi); }
+.seat.me .pill-name { left: 50%; top: calc(100% + 4px); translate: -50% 0; }
+.seat .mao-badge {
+  position: absolute; left: -6px; top: -6px;
+  height: 14px; padding: 0 5px;
+  border-radius: var(--r-chip);
+  background: var(--gold); color: var(--ink-on-gold);
+  font: 800 9px / 14px var(--font-ui); letter-spacing: .04em; text-transform: uppercase; /* TOKEN NUEVO: badge "mão" 9 px */
+  display: none;
+}
+.seat.is-mao .mao-badge { display: block; }
+
+/* Contador de cartas: 3 dorsos 22×32 */
+.counter { position: absolute; display: flex; height: 32px; }
+.counter .mini-back { width: 22px; height: 32px; margin-left: -8px; filter: drop-shadow(0 1px 1px rgba(0,0,0,.4)); } /* TOKEN NUEVO: sombra de los dorsos del contador (negro al 40 %) */
+.counter .mini-back:first-child { margin-left: 0; }
+.counter .mini-back svg { width: 100%; height: 100%; }
+.counter.side { bottom: calc(100% + 4px); left: 50%; translate: -50% 0; }
+.counter.right { left: calc(100% + 8px); top: 8px; }
+.counter.left { right: calc(100% + 8px); top: 8px; }
+/* §6.6 "hacia adentro" en celular: al lado del avatar los dorsos pisan los slots laterales (x 90–146 / 244–300),
+   así que van arriba del avatar, corridos hacia el centro de la mesa (in-r para el rival izq., in-l para el der.). */
+.counter.in-r { bottom: calc(100% + 4px); left: 50%; }
+.counter.in-l { bottom: calc(100% + 4px); right: 50%; }
+
+/* Anillo de timer (SVG sobre el avatar) */
+.ring { position: absolute; inset: calc(-1 * var(--ring) - 1px); width: auto; height: auto; pointer-events: none; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring circle { fill: none; stroke: var(--timer); stroke-width: calc(var(--ring) + 1px); stroke-linecap: butt; transition: stroke 300ms var(--ease-standard); }
+.ring circle.track { stroke: rgba(0, 0, 0, .35); }   /* TOKEN NUEVO: pista del timer */
+.seat:not(.active) .ring { display: none; }
+.seat.last-5s .ring circle.bar { stroke: var(--run); filter: drop-shadow(var(--glow-timer-run)); }
+.timer-badge {
+  position: absolute; left: 50%; top: calc(100% + 28px); translate: -50% 0;
+  min-width: 22px; height: 16px; padding: 0 5px;
+  border-radius: var(--r-chip);
+  background: var(--chip-bg); border: 1px solid var(--brass);
+  color: var(--ink-hi); font: var(--t-timer); line-height: 14px; text-align: center;
+  display: none;
+}
+.seat.me.active .timer-badge { display: block; }
+.seat.me.active.last-5s .timer-badge { color: var(--run-text); border-color: var(--run); }
+@keyframes tic { 0%, 100% { transform: scale(1.12); } 50% { transform: scale(1.16); } }
+.seat.last-5s .avatar { animation: tic 1s var(--ease-standard) infinite; }
+
+/* Burbujas sobre el avatar: grito (Londrina), persistente ("ACEITOU"), chat */
+.bubble {
+  position: absolute; left: 50%; bottom: calc(100% + 6px);
+  translate: -50% 0;
+  padding: 4px 8px;
+  border-radius: var(--r-panel);
+  background: rgba(20, 16, 12, .85);           /* TOKEN NUEVO: fondo de burbuja (bar al 85 %, DESIGN §6.6 "negro 85 %") */
+  border: 1px solid var(--border-brass);
+  color: var(--ink-hi);
+  font: var(--t-body);
+  white-space: nowrap;
+  z-index: 8;
+  pointer-events: none;
+}
+/* Grito sobre el avatar: va en --gold con sombra --brass-dim (es luz, no lámpara). Checklist §11.9: el ámbar --lamp
+   queda sólo en el botón TRUCO y en el sello; dos focos ámbar del mismo momento competían (decisión (a) de la revisión 1). */
+.bubble.shout { font: 900 calc(20px * var(--fm)) / 1 var(--font-display); letter-spacing: .02em; color: var(--gold); text-shadow: var(--shadow-stamp); background: transparent; border: 0; transform: rotate(var(--stamp-tilt)); }
+.bubble.shout.ok { color: var(--ok); }
+.bubble.shout.run { color: var(--run); }
+.bubble.emote { color: var(--gold); font: var(--t-chicana); }
+.bubble.persist { font: 800 10px / 1 var(--font-ui); letter-spacing: .04em; text-transform: uppercase; color: var(--ink-hi); padding: 3px 6px; }
+.seat.me .bubble { left: 50%; bottom: calc(100% + 8px); }
+/* mi grito sube y se corre a la derecha para no cruzarse con el badge "mão" (arriba-izquierda del avatar) */
+.seat.me .bubble.shout { left: 62%; bottom: calc(100% + 14px); }
+.seat[data-seat="3"] .bubble, .seat[data-seat="1"] .bubble { bottom: auto; top: calc(100% + 22px); }
+/* el parceiro tiene el placar arriba: su burbuja sale a la izquierda del avatar */
+.seat[data-seat="2"] .bubble { left: auto; right: calc(100% + 8px); bottom: auto; top: 50%; translate: 0 -50%; }
+/* 1v1: el rival ocupa el lugar del parceiro (195, 211); su burbuja debajo caía dentro de su propio slot (253–347) y
+   quedaba estampada sobre la carta jugada. Sale a la izquierda del avatar (a la derecha están sus dorsos). */
+.stage[data-mode="1v1"] .seat[data-seat="1"] .bubble { left: auto; right: calc(100% + 8px); bottom: auto; top: 50%; translate: 0 -50%; }
+@keyframes bubble-in { 0% { opacity: 0; scale: .6; } 60% { opacity: 1; scale: 1.08; } 100% { opacity: 1; scale: 1; } }
+.bubble.enter { animation: bubble-in calc(520ms * var(--speed)) var(--ease-overshoot) 1; }
+/* §8.3.4 "nada desaparece en un cuadro": las burbujas salen en 120 ms (al cumplir el ttl o al ser reemplazadas) */
+@keyframes bubble-out { 0% { opacity: 1; } 100% { opacity: 0; } }
+.bubble.exit { animation: bubble-out calc(120ms * var(--speed)) var(--ease-exit) 1 forwards; }
+
+/* Señal (sinal): el avatar parpadea un anillo de latón 3 veces */
+@keyframes signal { 0%, 100% { box-shadow: 0 0 0 var(--ring) var(--team-us); } 50% { box-shadow: 0 0 0 calc(var(--ring) + 4px) var(--gold-hot); } }
+.seat.signal .avatar { animation: signal 500ms var(--ease-standard) 3; }
+
+/* ---------------------------------------------------------------------
+   Slots en cruz: 56×82 (2v2) · 64×94 (1v1)
+   --------------------------------------------------------------------- */
+.slot { width: 56px; height: 82px; border-radius: 7%; }
+.slot .played { position: absolute; inset: 0; transform: rotate(var(--tilt, 0deg)); border-radius: 7%; box-shadow: var(--shadow-card-table); transition: box-shadow var(--motion-short) var(--ease-standard), transform var(--motion-short) var(--ease-standard), opacity var(--motion-short); }
+.slot .played svg { width: 100%; height: 100%; }
+.slot .played.winner { box-shadow: var(--shadow-card-table), var(--glow-win); transform: rotate(var(--tilt, 0deg)) translateY(-6px); }
+.slot .played.winner.them { box-shadow: var(--shadow-card-table), var(--glow-win-them); }
+.slot .played.loser { opacity: .9; }
+.slot .played.tied { box-shadow: var(--shadow-card-table), var(--glow-tie); }
+.slot .played.flip { animation: flip-y calc(400ms * var(--speed)) var(--ease-standard) 1; }
+@keyframes flip-y { 0% { transform: rotate(var(--tilt, 0deg)) rotateY(0); } 50% { transform: rotate(var(--tilt, 0deg)) rotateY(90deg); } 100% { transform: rotate(var(--tilt, 0deg)) rotateY(0); } }
+#slot-2 { left: 167px; top: 255px; }
+#slot-3 { left: 90px;  top: 339px; }
+#slot-1 { left: 244px; top: 339px; }
+#slot-0 { left: 167px; top: 431px; }
+
+/* Estampada de la manilha (§8.2: 520 ms, scale 1,6 → 1, sacudón ±3 px) */
+@keyframes stamp-card {
+  0%    { transform: rotate(var(--tilt, 0deg)) scale(1.6); opacity: .0; }
+  61.5% { transform: rotate(var(--tilt, 0deg)) scale(1) translate(0, 0); opacity: 1; }
+  74%   { transform: rotate(var(--tilt, 0deg)) scale(1) translate(3px, -2px); }
+  88%   { transform: rotate(var(--tilt, 0deg)) scale(1) translate(-3px, 2px); }
+  100%  { transform: rotate(var(--tilt, 0deg)) scale(1) translate(0, 0); }
+}
+.slot .played.stamped { animation: stamp-card var(--motion-stamp) cubic-bezier(.3, 0, .8, .15) 1; }
+.glow-ring {
+  position: absolute; left: 50%; top: 50%;
+  width: 90px; height: 120px; margin: -60px 0 0 -45px;
+  border-radius: 10px;
+  border: 2px solid var(--gold-hot);
+  pointer-events: none;
+  opacity: 0;
+}
+@keyframes glow-stamp { 0% { transform: scale(.7); opacity: .6; } 100% { transform: scale(1.5); opacity: 0; } }
+.glow-ring.go { animation: glow-stamp calc(400ms * var(--speed)) var(--ease-standard) 1; }
+
+/* ---------------------------------------------------------------------
+   §6.3 / §6.4 Mazo y vira: 48×70 en (195, 391); vira +22 px / −8°
+   Bajados 11 px respecto de §7.1 (y 345 → 356): en 2v2 la carta jugada por
+   el parceiro (slot 255–337, con ±4° de tilt llega a 340) y el carril de la
+   mão de onze tapaban los 9 px superiores de la pestaña VIRA (331–345). Ahora
+   la cruz termina en 340 y la pestaña nace en 342; el mazo (356–426) sigue
+   5 px por encima de mi slot (431). Pendiente: anotar en DESIGN §7.1.
+   --------------------------------------------------------------------- */
+.deck { left: 171px; top: 356px; width: 48px; height: 70px; z-index: 2; transition: left var(--motion-medium) var(--ease-standard); }
+.deck .back { position: absolute; inset: 0; border-radius: 7%; box-shadow: var(--shadow-card-table); }
+.deck .back svg { width: 100%; height: 100%; }
+.deck .back:nth-child(2) { translate: 1px -1px; }
+.deck .back:nth-child(3) { translate: 2px -2px; }
+.deck .back:nth-child(4) { translate: 3px -3px; }
+.deck.empty { opacity: 0; }
+.stage[data-variant="mineiro"] .deck { left: 159px; }
+.vira { left: 193px; top: 356px; width: 48px; height: 70px; z-index: 1; transform: rotate(-8deg); transform-origin: 50% 50%; perspective: 400px; }
+.vira-card { position: absolute; inset: 0; border-radius: 7%; box-shadow: var(--shadow-card-table); transform-style: preserve-3d; }
+.vira-card svg { width: 100%; height: 100%; backface-visibility: hidden; }
+.vira-tab { position: absolute; left: 10px; bottom: 100%; width: 28px; justify-content: center; }
+.vira.hidden { opacity: 0; }
+.stage[data-variant="mineiro"] .vira { display: none; }
+@keyframes vira-flip { 0% { transform: rotateY(180deg); } 100% { transform: rotateY(0deg); } }
+.vira-card.flipping { animation: vira-flip calc(250ms * var(--speed)) var(--ease-standard) 1; }
+
+/* ---------------------------------------------------------------------
+   Carril del parceiro (mão de onze): 3 cartas 56×82 bajo su avatar
+   --------------------------------------------------------------------- */
+.carril { left: 105px; top: 255px; width: 180px; height: 82px; display: flex; gap: 6px; z-index: 4; pointer-events: none; }
+.carril .played { position: relative; width: 56px; height: 82px; border-radius: 7%; box-shadow: var(--shadow-card-table); }
+.carril .played svg { width: 100%; height: 100%; }
+.carril:empty { display: none; }
+
+/* ---------------------------------------------------------------------
+   §6.13 Banco de vazas: NÓS 28–118 × 518–562 · ELES 272–362 × 518–562
+   --------------------------------------------------------------------- */
+.bank { top: 518px; width: 90px; height: 44px; display: flex; gap: 3px; z-index: 2; }
+.bank-us { left: 28px; }
+.bank-them { left: 272px; justify-content: flex-end; }
+.vaza {
+  position: relative; width: 28px; height: 44px;
+  cursor: pointer; border: 0; background: none; padding: 0;
+}
+/* Elementos que mesa.js muestra/oculta con visibility inline (vaza, dorsos del contador, carril): sin transiciones.
+   Con prefers-reduced-motion tokens.css fuerza transition-duration 1ms en todo y, en una pestaña en segundo plano,
+   esa transición de visibility no avanza nunca: la pila del banco quedaba invisible (visto en la revisión 2). */
+.vaza, .counter .mini-back, .carril .played { transition-property: none; }
+.vaza .mini { position: absolute; left: 0; top: 0; width: 28px; height: 41px; border-radius: 7%; box-shadow: var(--shadow-card-table); }
+.vaza .mini svg { width: 100%; height: 100%; }
+.vaza .mini:nth-child(1) { translate: 3px 3px; }
+.vaza .mini:nth-child(2) { translate: 2px 2px; }
+.vaza .mini:nth-child(3) { translate: 1px 1px; }
+.vaza .dot { position: absolute; right: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%; background: var(--team-us); box-shadow: 0 0 0 1px var(--bg-bar); }
+.vaza .dot.them { background: var(--team-them); }
+.vaza .dot.tie { background: var(--tie); }
+
+/* ---------------------------------------------------------------------
+   §6.10 Sellos y §6.12 banner, centrados en la cruz (195, 380)
+   --------------------------------------------------------------------- */
+.stamp-wrap { left: 0; width: 100%; top: 380px; height: 0; display: flex; justify-content: center; align-items: center; z-index: 9; pointer-events: none; }
+.sello { position: relative; display: inline-block; padding: 8px 22px; transform: rotate(var(--stamp-tilt)); }
+/* §6.9 asked-to-me: mientras YO respondo, el sello sostenido baja a la franja libre entre los bancos (centro y≈545,
+   x 118–272) para no tapar las cartas jugadas que necesito leer; cuando el pedido es mío queda en la cruz. */
+.sello.low { translate: 0 165px; padding: 4px 14px; }                 /* ≈170×56 centrado en y 545: libre de los bancos (28–118 / 272–362) */
+.sello.low .txt { font: 900 calc(40px * var(--fm)) / .9 var(--font-display); }
+/* Mientras un sello sale (100 ms) y entra el siguiente en el mismo cuadro (§8.2 E-17), el que sale se saca del flujo
+   para que no empuje al nuevo: el hijo absoluto de un flex se centra igual que si fuera el único item. */
+.stamp-wrap .sello.exit { position: absolute; }
+.sello svg.bg { position: absolute; inset: -6px -8px; width: calc(100% + 16px); height: calc(100% + 12px); overflow: visible; }
+.sello svg.bg path { fill: rgba(20, 16, 12, .55); stroke: currentColor; stroke-width: 2px; stroke-linejoin: round; } /* TOKEN NUEVO: fondo del sello (bar al 55 %) */
+.sello .txt { position: relative; font: var(--t-stamp); letter-spacing: var(--t-stamp-ls); text-transform: uppercase; text-shadow: var(--shadow-stamp); white-space: nowrap; }
+.sello.small .txt { font: 900 calc(40px * var(--fm)) / .9 var(--font-display); }
+.sello.truco { color: var(--lamp); }
+.sello.ok { color: var(--ok); }
+.sello.run { color: var(--run); }
+.sello.tie { color: var(--tie); }
+@keyframes sello-in { 0% { opacity: 0; transform: rotate(var(--stamp-tilt)) scale(1.5); } 100% { opacity: 1; transform: rotate(var(--stamp-tilt)) scale(1); } }
+@keyframes sello-out { 0% { opacity: 1; } 100% { opacity: 0; } }
+.sello.enter { animation: sello-in calc(150ms * var(--speed)) var(--ease-enter) 1; }
+.sello.exit { animation: sello-out calc(100ms * var(--speed)) var(--ease-exit) 1 forwards; }
+
+.banner {
+  left: 24px; top: 352px; width: 342px; min-height: 56px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  text-align: center;
+  background: rgba(20, 16, 12, .84);           /* TOKEN NUEVO: fondo del banner (bar al 84 %). Sin backdrop-filter:
+                                                   Chromium deja de pintar el texto si combina blur + animación de opacidad
+                                                   dentro de un ancestro escalado (visto en el prototipo). */
+  border: 1px solid var(--border-brass);
+  border-radius: var(--r-panel);
+  z-index: 9; pointer-events: none;
+  opacity: 0;
+}
+.banner .title { font: var(--t-banner); letter-spacing: var(--t-banner-ls); text-transform: uppercase; color: var(--gold); }
+.banner .title.big { font: var(--t-banner-big); }
+.banner .title.sober { font: 700 calc(20px * var(--fm)) / 1 var(--font-ui); letter-spacing: .04em; color: var(--ink-mid); }
+.banner .title.run { color: var(--run-text); }
+.banner .sub { font: var(--t-body); color: var(--ink-mid); }
+.banner .count { font: 900 calc(40px * var(--fm)) / 1 var(--font-display); color: var(--gold); }
+
+/* ---------------------------------------------------------------------
+   §6.17 Toasts: entran en la franja libre del paño entre los bancos
+   (x 120–270, y 516+), no "desde arriba del paño": en y 183 tapaban el
+   asiento del parceiro justo cuando hay que ver su anillo de turno, y con
+   300 px de ancho pisaban las pilas de vazas de NÓS (28–118) y ELES
+   (272–362). Un solo toast a la vez: el nuevo reemplaza al anterior con
+   fundido cruzado. Con un sello .low en la misma franja y mi slot vacío,
+   el toast sube a y 440 (.up). Pendiente: corregir DESIGN §6.17.
+   --------------------------------------------------------------------- */
+.toasts { left: 120px; top: 516px; width: 150px; display: flex; flex-direction: column; align-items: center; gap: 6px; z-index: 10; pointer-events: none; transition-property: none; }
+.toasts.up { top: 440px; }
+.toasts .toast { max-width: 100%; padding: 6px 12px; text-align: center; white-space: normal; line-height: 1.25; }
+.toasts .toast.exit { position: absolute; }   /* fuera del flujo: el nuevo no se apila debajo mientras el viejo se va */
+@keyframes toast-in { 0% { opacity: 0; transform: translateY(-12px); } 100% { opacity: 1; transform: none; } }
+@keyframes toast-out { 0% { opacity: 1; } 100% { opacity: 0; transform: translateY(-6px); } }
+.toast.enter { animation: toast-in var(--motion-short) var(--ease-enter) 1; }
+.toast.exit { animation: toast-out var(--motion-short) var(--ease-exit) 1 forwards; }
+.toast .counter-chip { font: var(--t-chip); color: var(--brass); margin-left: 4px; }
+
+/* ---------------------------------------------------------------------
+   Mi asiento (56 en (46, 640)) y chat (40 en (354, 612))
+   --------------------------------------------------------------------- */
+#seat-0 { --cx: 46px; --cy: 640px; }
+.chat-btn {
+  left: 334px; top: 592px; width: 40px; height: 40px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: var(--chip-bg); border: 1px solid var(--brass);
+  color: var(--ink-mid);
+  z-index: 8; /* siempre arriba de la mano (z 7): el tocable no puede quedar debajo de una carta */
+  transition: color var(--motion-button), border-color var(--motion-button);
+}
+.chat-btn:hover, .chat-btn[aria-expanded="true"] { color: var(--gold); border-color: var(--gold); }
+.chat-btn.cooldown { opacity: .5; pointer-events: none; }
+.auto-count {
+  position: absolute; left: 50%; top: calc(100% + 48px); translate: -50% 0;
+  font: var(--t-chip); color: var(--run-text); white-space: nowrap;
+  display: none;
+}
+.seat.me.has-auto .auto-count { display: block; }
+
+/* ---------------------------------------------------------------------
+   §6.2 Mi mano: 98–332 × 596–766; 104×153; abanico −8 / 0 / +8
+   (±10° montaba la esquina de la 3.ª carta sobre el botón de chat)
+   --------------------------------------------------------------------- */
+.hand {
+  left: 98px; top: 596px; width: 234px; height: 170px; z-index: 7;
+  /* Fuera de turno se atenúa el CONTENEDOR (compone sin transparencia entre cartas hermanas); con pedido pendiente
+     (locked) la mano queda al 100 % visible (§6.9). Antes la opacidad iba por carta y la de abajo se transparentaba. */
+  opacity: .78;
+  transition: opacity calc(200ms * var(--speed)) var(--ease-standard);
+}
+.hand.my-turn, .hand.locked { opacity: 1; }
+.hand-slot {
+  position: absolute; width: 104px; height: 153px;
+  left: var(--hx, 0px); top: 17px;
+  transition: left calc(160ms * var(--speed)) var(--ease-standard);
+}
+.card {
+  position: absolute; inset: 0;
+  border-radius: 7%;
+  box-shadow: var(--shadow-card-hand);
+  transform: rotate(var(--rot, 0deg)) translateY(var(--lift, 0px));
+  transform-origin: 50% 85%;
+  transition: transform calc(200ms * var(--speed)) var(--ease-standard), opacity calc(200ms * var(--speed)) var(--ease-standard), box-shadow calc(200ms * var(--speed)) var(--ease-standard);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.card svg { width: 100%; height: 100%; }
+.card.hidden-card { opacity: 0; pointer-events: none; }
+.hand.my-turn .card { --lift: -10px; }
+.hand.locked .card { cursor: default; }
+.card.touched { transform: rotate(calc(var(--rot, 0deg) + 4deg)) translateY(-22px) scale(1.08); box-shadow: var(--shadow-card-lift); transition-timing-function: var(--ease-overshoot); transition-duration: calc(150ms * var(--speed)); }
+.card.flying { opacity: 0; }
+/* Reposo: 1–2 px vertical, fase propia, sólo en turno y con motion */
+@keyframes idle-a { 0%, 100% { translate: 0 0; } 50% { translate: 0 -2px; } }
+.hand.my-turn.idle .hand-slot:nth-child(1) { animation: idle-a 2.4s ease-in-out infinite; }
+.hand.my-turn.idle .hand-slot:nth-child(2) { animation: idle-a 2.4s ease-in-out .8s infinite; }
+.hand.my-turn.idle .hand-slot:nth-child(3) { animation: idle-a 2.4s ease-in-out 1.6s infinite; }
+html[data-motion="off"] .hand.idle .hand-slot { animation: none; }
+.hand.coberta-armed .card { outline: 2px dashed var(--brass); outline-offset: 2px; }
+/* Destello de la manilha repartida (§2.3 --glow-manilha-deal: 0 → 40 % → 0, 300 ms) */
+@keyframes manilha-deal { 0% { box-shadow: var(--shadow-card-hand); } 50% { box-shadow: var(--shadow-card-hand), 0 0 0 2px rgba(255, 227, 161, .4), 0 0 18px rgba(255, 227, 161, .4); } 100% { box-shadow: var(--shadow-card-hand); } }
+.card.deal-glow { animation: manilha-deal calc(300ms * var(--speed)) var(--ease-standard) 1; }
+.card.flipping { animation: flip-y calc(400ms * var(--speed)) var(--ease-standard) 1; }
+
+/* ---------------------------------------------------------------------
+   §6.8 Botonera: 24–366 × 768–820; huecos 100 / 100 / 134, gap 8
+   --------------------------------------------------------------------- */
+.botonera {
+  left: 24px; top: 768px; width: 342px; height: 52px;
+  display: grid; grid-template-columns: 100px 100px 134px; gap: 0;
+  padding: 0; overflow: visible;
+  z-index: 7;
+}
+.bar-slot { position: relative; display: flex; }
+.bar-slot .btn { width: 100%; min-height: 50px; padding: 0 6px; border-radius: 0; border-width: 0; }
+.bar-slot-a .btn { border-top-left-radius: var(--r-panel); border-bottom-left-radius: var(--r-panel); }
+.bar-slot-c .btn { border-top-right-radius: var(--r-panel); border-bottom-right-radius: var(--r-panel); }
+.bar-slot .btn-truco { min-width: 0; height: 52px; margin: -1px -1px -1px 0; box-shadow: var(--glow-truco); }
+.bar-slot .btn-truco[hidden] { display: none; }
+.bar-slot .btn-ghost-run, .bar-slot .btn-ghost-ok, .bar-slot .btn-ghost-brass {
+  border: var(--border-ghost-w) solid; border-radius: var(--r-panel); margin: 4px;
+  min-height: 42px;
+}
+.bar-slot .btn-fill-ok { border-radius: var(--r-panel); margin: 4px; min-height: 42px; }
+.bar-slot .btn[hidden] { display: none; }
+.bar-slot .btn.blocked { opacity: .4; }
+/* Chip "SEM TRUCO" en el hueco de TRUCO durante la mão de onze / ferro: no tocable, latón, Gabarito (§6.7 hidden) */
+.bar-slot .bar-note { align-self: center; margin: 0 auto; height: 24px; padding: 0 10px; color: var(--brass); pointer-events: none; background: transparent; border-color: var(--brass-dim); }
+.bar-slot .bar-note[hidden] { display: none; }
+/* CORRER voluntario (sin pedido pendiente) pide confirmación: primer toque arma el botón 1,5 s, segundo toque corre */
+.bar-slot .btn-correr.confirm { background: var(--run); color: var(--ink-hi); }
+.bar-slot .btn-coberta[aria-pressed="true"] { background: var(--brass); color: var(--ink-hi); }
+.btn .key { display: none; }
+.stage[data-layout="desktop"] .btn .key { display: inline; }
+.btn-truco .key { color: var(--ink-on-gold); opacity: .6; font: 700 11px / 1 var(--font-ui); }
+
+.botonera.dimmed .bar-slot { opacity: .4; pointer-events: none; }
+.bar-dim {
+  position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+  font: var(--t-label); letter-spacing: var(--t-label-ls); text-transform: uppercase; color: var(--ink-mid);
+  pointer-events: none;
+}
+.botonera.dimmed .bar-dim { display: flex; }
+.bar-dim span { padding: 6px 12px; border-radius: var(--r-pill); background: var(--surface-1); border: 1px solid var(--border-brass); }
+.bar-wait {
+  position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  font: var(--t-body); color: var(--ink-mid); background: var(--surface-1); border-radius: var(--r-panel);
+}
+.botonera.waiting .bar-slot { visibility: hidden; }
+.botonera.waiting .bar-wait { display: flex; }
+.bar-wait-line { width: 60%; height: 1px; background: var(--brass); transform-origin: 0 50%; animation: wait-line calc(2000ms * var(--speed)) var(--ease-standard) infinite; }
+@keyframes wait-line { 0% { transform: scaleX(0); opacity: 1; } 80% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
+.botonera.bar-enter { animation: bar-enter calc(200ms * var(--speed)) var(--ease-enter) 1; }
+@keyframes bar-enter { 0% { transform: translateY(16px); opacity: .4; } 100% { transform: none; opacity: 1; } }
+
+/* Pie legal: y 824–840 */
+.legal-foot { left: 0; width: 100%; top: 824px; margin: 0; z-index: 2; }
+
+/* Capa de efectos */
+.fx { inset: 0; pointer-events: none; z-index: 20; }
+.fx .flyer { position: absolute; left: 0; top: 0; border-radius: 7%; box-shadow: var(--shadow-card-table); will-change: transform; }
+.fx .flyer svg { width: 100%; height: 100%; }
+
+/* ---------------------------------------------------------------------
+   Popovers (banco, chat): --surface-2, 180 ms pop
+   --------------------------------------------------------------------- */
+.popover { z-index: 30; padding: var(--s-3); border-radius: var(--r-card-ui); }
+@keyframes pop-in { 0% { opacity: 0; transform: scale(.97) translateY(8px); } 100% { opacity: 1; transform: none; } }
+.popover:not([hidden]) { animation: pop-in calc(180ms * var(--speed)) var(--ease-pop) 1; }
+.popover .cards { display: flex; gap: 6px; }
+.popover .cards .played { position: relative; width: 56px; height: 82px; border-radius: 7%; box-shadow: var(--shadow-card-table); }
+.popover .cards .played svg { width: 100%; height: 100%; }
+.popover .cards .played.winner { box-shadow: var(--shadow-card-table), var(--glow-win); }
+.popover .cards .played.winner.them { box-shadow: var(--shadow-card-table), var(--glow-win-them); }
+.popover .cap { font: var(--t-label); letter-spacing: var(--t-label-ls); text-transform: uppercase; color: var(--ink-mid); margin-bottom: 8px; }
+/* Chat: sobre la mitad inferior del paño, anclado al borde derecho del botón (x 374); no tapa la mano ni la botonera.
+   TOKEN NUEVO: ancho 300 (342 − 2 × 21, para que no pise los bordes del paño). */
+.chat-pop { width: 300px; left: 74px; top: 288px; max-height: 302px; overflow: auto; padding: 8px 12px; }
+.chat-pop .cap { margin-bottom: 4px; }
+.chat-pop .group { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+.chat-pop .group:last-child { margin-bottom: 0; }
+.chat-pop .say { min-height: 28px; padding: 0 9px; border-radius: var(--r-pill); border: 1px solid var(--border-brass); color: var(--ink-hi); font: var(--t-body); background: var(--chip-bg); }
+.chat-pop .say:hover { border-color: var(--brass); }
+.chat-pop .say.emote { font: var(--t-chicana); color: var(--gold); }
+.chat-pop .say.sinal { color: var(--ink-mid); }
+.chat-pop .say.sinal b { color: var(--gold); font-weight: 800; margin-left: 4px; }
+
+/* ---------------------------------------------------------------------
+   §6.18 Resultado: scrim sobre la mesa, nunca sobre mi mano
+   --------------------------------------------------------------------- */
+.result { inset: 0; z-index: 40; pointer-events: none; }
+.result .result-scrim, .result .result-body { pointer-events: auto; }
+.result[hidden] { display: none; }
+.result-scrim { top: 95px; bottom: 254px; }   /* debajo del header (sigue usable) y antes de la mano (y 590) */
+.result-body { position: absolute; left: 24px; top: 150px; width: 342px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.result-title { font: var(--t-victory); letter-spacing: var(--t-victory-ls); text-transform: uppercase; text-align: center; }
+.result-title.victory { background: var(--gold-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.result-title.defeat { font: 700 calc(32px * var(--fm)) / 1 var(--font-ui); letter-spacing: .06em; color: var(--ink-mid); }
+.result-card { width: 100%; border-radius: var(--r-card-ui); border-color: var(--brass); padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.result-card .score { display: flex; justify-content: center; align-items: baseline; gap: 12px; font: var(--t-score); letter-spacing: var(--t-score-ls); font-variant-numeric: tabular-nums; }
+.result-card .score .us { color: var(--team-us); } .result-card .score .them { color: var(--team-them); } .result-card .score .x { color: var(--ink-lo); font-size: calc(18px * var(--fm)); }
+.result-card .line { font: var(--t-body); color: var(--ink-mid); text-align: center; }
+.result-card .line.motto { color: var(--ink-hi); }
+.result-card .actions { display: flex; gap: 8px; margin-top: 6px; }
+.result-card .actions .btn { flex: 1; min-height: 44px; border: var(--border-ghost-w) solid; padding: 0 6px; font-size: calc(12px * var(--fm)); letter-spacing: .02em; white-space: nowrap; }
+@keyframes rise { 0% { opacity: 0; transform: translateY(12px); } 100% { opacity: 1; transform: none; } }
+.result:not([hidden]) .result-title { animation: rise calc(300ms * var(--speed)) var(--ease-enter) 1 both; }
+.result:not([hidden]) .result-card { animation: rise calc(300ms * var(--speed)) var(--ease-enter) calc(250ms * var(--speed)) 1 both; }
+.result:not([hidden]) .result-card .actions { animation: rise calc(300ms * var(--speed)) var(--ease-enter) calc(500ms * var(--speed)) 1 both; }
+
+/* ---------------------------------------------------------------------
+   §6.20 Modal de ajustes (+ panel de demo)
+   --------------------------------------------------------------------- */
+.modal { inset: 0; z-index: 50; }
+.modal[hidden] { display: none; }
+.modal-card {
+  position: absolute; left: 50%; top: 50%; translate: -50% -50%;
+  width: 342px; max-height: 92%; overflow: auto;
+  border-radius: var(--r-modal); padding: 16px;
+  animation: pop-in var(--motion-short) var(--ease-enter) 1;
+}
+.modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.modal-head h2 { margin: 0; color: var(--gold); }
+.modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; }
+.field { display: flex; flex-direction: column; gap: 4px; font: var(--t-label); letter-spacing: var(--t-label-ls); text-transform: uppercase; color: var(--ink-mid); }
+.field select, .field input {
+  height: 36px; padding: 0 8px; border-radius: var(--r-chip);
+  background: var(--surface-1); border: 1px solid var(--brass); color: var(--ink-hi);
+  font: var(--t-body); text-transform: none; letter-spacing: 0;
+}
+.modal-actions { margin-top: 12px; display: flex; gap: 8px; }
+.modal-actions .btn, .modal-force .btn { border: var(--border-ghost-w) solid; min-height: 40px; flex: 1; }
+.modal-sub { margin: 14px 0 6px; color: var(--brass); }
+.modal-force { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.modal-force .btn { font-size: calc(12px * var(--fm)); padding: 0 6px; }
+.modal-note { color: var(--ink-lo); margin: 10px 0 0; min-height: 1em; }
+.modal .legal { margin: 12px 0 0; }
+
+/* ---------------------------------------------------------------------
+   1v1: rival arriba en (195, 211); slots 64×94 en (195, 300) y (195, 470)
+   --------------------------------------------------------------------- */
+.stage[data-mode="1v1"] #seat-2, .stage[data-mode="1v1"] #seat-3,
+.stage[data-mode="1v1"] #slot-2, .stage[data-mode="1v1"] #slot-3 { display: none; }
+.stage[data-mode="1v1"] #slot-1 { left: 163px; top: 253px; width: 64px; height: 94px; }
+/* En 1v1 celular el slot del rival (y 253–347) pisaba la pestaña VIRA (y 331–345) y no hay aire entre la píldora del
+   rival (251) y la vira: la pestaña pasa al borde derecho de la vira (x 243–271, y≈351) y la guía sale de ahí. */
+.stage[data-layout="mobile"][data-mode="1v1"] .vira-tab { left: auto; right: -30px; bottom: auto; top: 6px; }
+.stage[data-mode="1v1"] #slot-0 { left: 163px; top: 423px; width: 64px; height: 94px; }
+.stage[data-mode="1v1"] .carril { display: none; }
+
+/* =====================================================================
+   §7.2 DESKTOP 1440×900
+   ===================================================================== */
+.stage[data-layout="desktop"] .hdr { left: 24px; top: 24px; width: 1392px; }
+.stage[data-layout="desktop"] .mesa-chip { position: absolute; left: 56px; top: 8px; }
+.stage[data-layout="desktop"] .placar { left: 490px; top: 26px; width: 460px; height: 76px; grid-template-columns: 150px 1fr 150px; }
+.stage[data-layout="desktop"] .pl-pts { font-size: calc(36px * var(--font-size-multiplier)); }
+.stage[data-layout="desktop"] .pill-rodada { top: 106px; }
+.stage[data-layout="desktop"] .pill-rodada.from-us { left: 490px; }
+.stage[data-layout="desktop"] .pill-rodada.from-them { right: 490px; }
+.stage[data-layout="desktop"] .mesa-frame { --rail-w: 14px; left: 280px; top: 160px; width: 880px; height: 560px; }
+.stage[data-layout="desktop"] .seat { --av: 64px; }
+.stage[data-layout="desktop"] #seat-2 { --cx: 720px; --cy: 190px; }
+.stage[data-layout="desktop"] #seat-3 { --cx: 330px; --cy: 440px; }
+.stage[data-layout="desktop"] #seat-1 { --cx: 1110px; --cy: 440px; }
+.stage[data-layout="desktop"] #seat-0 { --cx: 420px; --cy: 760px; --av: 64px; --ring: 5px; }
+.stage[data-layout="desktop"] .counter .mini-back { width: 28px; height: 41px; margin-left: -10px; }
+.stage[data-layout="desktop"] .counter { height: 41px; }
+.stage[data-layout="desktop"] .slot { width: 72px; height: 106px; }
+.stage[data-layout="desktop"] #slot-2 { left: 684px; top: 267px; }
+.stage[data-layout="desktop"] #slot-3 { left: 564px; top: 387px; }
+.stage[data-layout="desktop"] #slot-1 { left: 804px; top: 387px; }
+.stage[data-layout="desktop"] #slot-0 { left: 684px; top: 507px; }
+.stage[data-layout="desktop"][data-mode="1v1"] #slot-1 { left: 684px; top: 267px; width: 72px; height: 106px; }
+.stage[data-layout="desktop"][data-mode="1v1"] #slot-0 { left: 684px; top: 507px; width: 72px; height: 106px; }
+.stage[data-layout="desktop"] .deck { left: 690px; top: 396px; width: 60px; height: 88px; }
+.stage[data-layout="desktop"][data-variant="mineiro"] .deck { left: 676px; }
+.stage[data-layout="desktop"] .vira { left: 718px; top: 396px; width: 60px; height: 88px; }
+.stage[data-layout="desktop"] .vira-tab { left: 16px; }
+.stage[data-layout="desktop"] .carril { left: 606px; top: 267px; width: 228px; height: 106px; gap: 6px; }
+.stage[data-layout="desktop"] .carril .played { width: 72px; height: 106px; }
+.stage[data-layout="desktop"] .bank { top: 663px; width: 140px; height: 56px; gap: 6px; }
+.stage[data-layout="desktop"] .bank-us { left: 330px; }
+.stage[data-layout="desktop"] .bank-them { left: 970px; }
+.stage[data-layout="desktop"] .vaza { width: 36px; height: 56px; }
+.stage[data-layout="desktop"] .vaza .mini { width: 36px; height: 53px; }
+.stage[data-layout="desktop"] .stamp-wrap { top: 440px; }
+.stage[data-layout="desktop"] .glow-ring { width: 110px; height: 150px; margin: -75px 0 0 -55px; }
+.stage[data-layout="desktop"] .banner { left: 549px; top: 412px; }
+.stage[data-layout="desktop"] .toasts { left: 570px; top: 660px; width: 300px; } /* franja libre entre los bancos (330–470 / 970–1110, y 663) */
+.stage[data-layout="desktop"] .toasts.up { top: 600px; }
+.stage[data-layout="desktop"] .pill-rodada { max-width: none; padding: 0 var(--s-4); }
+.stage[data-layout="desktop"] .pill-rodada.from-tie { top: 106px; }
+.stage[data-layout="desktop"] .sello.low { translate: 0 205px; }   /* centro y≈645: entre mi slot (613) y los bancos (663) */
+.stage[data-layout="desktop"] .chat-btn { left: 896px; top: 770px; } /* la 3.ª carta (+8°) termina en x 878 en reposo y ≈888 levantada (hover 1,15): 8 px de aire; §7.2 decía (1020, 760), que cae dentro de la botonera (940–1180): pendiente actualizar */
+.stage[data-layout="desktop"] .hand { left: 584px; top: 702px; width: 272px; height: 176px; }
+.stage[data-layout="desktop"] .hand-slot { width: 120px; height: 176px; top: 0; }
+.stage[data-layout="desktop"] .card:hover { transform: rotate(var(--rot, 0deg)) translateY(-14px) scale(1.15); box-shadow: var(--shadow-card-lift); z-index: 2; }
+.stage[data-layout="desktop"] .hand.locked .card:hover { transform: rotate(var(--rot, 0deg)) translateY(var(--lift, 0px)); }
+.stage[data-layout="desktop"] .botonera { left: 940px; top: 764px; }
+.stage[data-layout="desktop"] .legal-foot { top: 868px; }
+.stage[data-layout="desktop"] .result-scrim { top: 110px; bottom: 0; }
+.stage[data-layout="desktop"] .result-body { left: 549px; top: 230px; }
+.stage[data-layout="desktop"] .chat-pop { left: 560px; top: 430px; }
+.stage[data-layout="desktop"] .seat[data-seat="3"] .bubble, .stage[data-layout="desktop"] .seat[data-seat="1"] .bubble { bottom: calc(100% + 6px); top: auto; }
+.stage[data-layout="desktop"] .seat[data-seat="2"] .bubble { left: auto; right: calc(100% + 10px); top: 50%; translate: 0 -50%; }

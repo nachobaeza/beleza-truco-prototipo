@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14100C">
+<title>Beleza Truco · caixa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@400..900&family=Londrina+Solid:wght@400;900&family=Fraunces:opsz,wght@9..144,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body class="bar" data-kyc="verificada">
+<div class="watermark" aria-hidden="true">TRUCO</div>
+
+<div class="app">
+  <header class="app-hdr">
+    <a class="icon-btn right" href="lobby.html" aria-label="Voltar para as mesas">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M10 6 4 12l6 6M4 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+    <a class="brand desk-only" href="home.html" aria-label="Beleza Truco, início">Beleza Truco</a>
+    <div class="mid"><span class="title right">Caixa</span><nav class="topnav" aria-label="Seções"></nav></div>
+    <a class="chip chip-saldo" href="#" aria-label="Saldo disponível">Saldo <b>R$ 0,00</b></a>
+  </header>
+
+  <main class="cols">
+    <section>
+      <!-- Saldo: dato, voz neutra (§10) -->
+      <div class="panel surface-1" style="margin-bottom:12px">
+        <div class="stats" style="grid-template-columns:1fr 1fr">
+          <div class="stat"><span class="k">Saldo disponível</span><span class="v gold" id="saldo">R$ 0,00</span></div>
+          <div class="stat"><span class="k">Reservado em mesas</span><span class="v sm" id="reservado">R$ 0,00</span><span class="sub">liberado no fim da partida</span></div>
+        </div>
+      </div>
+
+      <div class="seg wide" id="tabs" aria-label="Operações">
+        <button type="button" data-v="dep" aria-pressed="true">Depositar</button>
+        <button type="button" data-v="wd" aria-pressed="false">Sacar</button>
+        <button type="button" data-v="hist" aria-pressed="false">Histórico</button>
+      </div>
+
+      <!-- ===== Depositar ===== -->
+      <div data-pane="dep" class="on" style="margin-top:12px">
+        <div class="panel surface-1" id="dep-form">
+          <form class="form" id="f-dep" autocomplete="off">
+            <label class="field" for="dep-amt"><span>Valor do depósito</span></label>
+            <div class="amount"><span class="cur">R$</span><input id="dep-amt" name="amt" inputmode="decimal" value="50,00" aria-label="Valor do depósito em reais"></div>
+            <div class="presets" id="dep-presets" role="group" aria-label="Valores sugeridos">
+              <button type="button" data-v="20">R$ 20</button>
+              <button type="button" data-v="50" aria-pressed="true">R$ 50</button>
+              <button type="button" data-v="100">R$ 100</button>
+              <button type="button" data-v="200">R$ 200</button>
+            </div>
+            <div class="kv"><span>Mínimo por depósito</span><b id="dep-min">R$ 10,00</b></div>
+            <div class="kv"><span>Máximo por dia</span><b id="dep-max">R$ 5.000,00</b></div>
+            <div class="kv"><span>Confirmação</span><b>Pix · em até 1 min</b></div>
+            <button class="btn btn-fill-ok block" type="submit">Gerar Pix</button>
+            <p class="note lo">O Pix deve sair de uma conta com o mesmo CPF do cadastro. Valores de outra titularidade são devolvidos.</p>
+          </form>
+        </div>
+
+        <!-- Pix gerado: QR + copia e cola -->
+        <div class="panel surface-1" id="dep-pix" hidden>
+          <div class="sec-head"><h2>Pix de <span id="pix-amt">R$ 50,00</span></h2><span class="chip chip-small"><span class="dot tie"></span>válido <b id="pix-ttl">30:00</b></span></div>
+          <div class="pix">
+            <div class="qr" id="qr"></div>
+            <div class="copia"><code id="pix-code">00020126…</code><button class="btn btn-ghost-brass copy" type="button" id="btn-copy" aria-label="Copiar código Pix copia e cola">Copiar</button></div>
+            <div class="btn-row" style="width:100%">
+              <button class="btn btn-ghost-brass" type="button" id="btn-novo">Outro valor</button>
+              <button class="btn btn-ghost-ok" type="button" id="btn-sim" aria-label="Simular pagamento (só no protótipo)">Simular pagamento</button>
+            </div>
+          </div>
+          <p class="note lo" style="margin-top:10px">Abra o app do seu banco, escolha Pix copia e cola ou leia o QR. O saldo entra assim que o banco confirmar.</p>
+        </div>
+      </div>
+
+      <!-- ===== Sacar ===== -->
+      <div data-pane="wd" style="margin-top:12px">
+        <div class="panel surface-1">
+          <form class="form" id="f-wd" autocomplete="off">
+            <label class="field" for="wd-amt"><span>Valor do saque</span></label>
+            <div class="amount"><span class="cur">R$</span><input id="wd-amt" name="amt" inputmode="decimal" value="30,00" aria-label="Valor do saque em reais"></div>
+            <div class="presets" id="wd-presets" role="group" aria-label="Valores sugeridos">
+              <button type="button" data-v="20">R$ 20</button>
+              <button type="button" data-v="30" aria-pressed="true">R$ 30</button>
+              <button type="button" data-v="50">R$ 50</button>
+              <button type="button" data-v="all">Tudo</button>
+            </div>
+            <div class="kv"><span>Chave Pix</span><b>CPF <span id="wd-cpf">***.***.***-**</span></b></div>
+            <div class="kv"><span>Prazo</span><b>até 1 dia útil</b></div>
+            <div class="kv"><span>Taxa de saque</span><b id="wd-fee">R$ 0,00</b></div>
+            <div class="kv"><span>Mínimo · máximo por dia</span><b><span id="wd-min">R$ 20,00</span> · <span id="wd-max">R$ 5.000,00</span></b></div>
+            <button class="btn btn-ghost-ok block" type="submit" id="btn-wd">Solicitar saque</button>
+            <p class="note lo" id="wd-note">O saque vai para a chave Pix do CPF cadastrado. Não é possível sacar para outra pessoa.</p>
+            <p class="note lo" id="wd-block" hidden>Para sacar, conclua a verificação de identidade abaixo.</p>
+          </form>
+        </div>
+      </div>
+
+      <!-- ===== Histórico ===== -->
+      <div data-pane="hist" style="margin-top:12px">
+        <ul class="list" id="hist" aria-label="Histórico"></ul>
+        <p class="note lo" style="margin-top:12px">Cada linha mostra o que entrou ou saiu do seu saldo. Em mesas 2x2, o valor líquido é dividido com o parceiro.</p>
+      </div>
+    </section>
+
+    <!-- Verificação de identidade (siempre visible: en desktop a la derecha) -->
+    <aside class="sticky" id="kyc-side">
+      <div class="panel surface-1" style="margin-top:12px">
+        <div class="sec-head" style="margin-bottom:8px"><h2>Verificação de identidade</h2><span class="chip chip-small" id="kyc-chip"><span class="dot ok"></span>Verificada</span></div>
+        <div class="kv"><span>CPF</span><b id="kyc-cpf">***.***.***-**</b></div>
+        <div class="kv"><span>Maior de 18</span><b id="kyc-age" class="ok">Confirmado</b></div>
+        <div class="kv"><span>Documento</span><b id="kyc-doc">Aprovado</b></div>
+        <div class="kv"><span>Selfie</span><b id="kyc-selfie">Aprovada</b></div>
+        <div id="kyc-actions" hidden style="margin-top:12px">
+          <button class="btn btn-ghost-ok block" type="button" id="btn-kyc">Enviar documento</button>
+          <p class="note lo" style="margin-top:8px">RG ou CNH, frente e verso, e uma selfie. A análise leva até 24 h. Sem a verificação dá para depositar e jogar, mas não sacar.</p>
+        </div>
+      </div>
+      <div class="panel surface-1">
+        <p class="panel-title">Jogo responsável</p>
+        <div class="kv"><span>Limite de depósito por dia</span><b>R$ 5.000,00</b></div>
+        <div class="kv"><span>Limite definido por você</span><b id="self-limit">Não definido</b></div>
+        <div class="btn-row" style="margin-top:10px">
+          <button class="btn btn-ghost-brass sm" type="button" id="btn-limit">Definir limite</button>
+          <button class="btn btn-ghost-brass sm" type="button" id="btn-pause">Pausar conta</button>
+        </div>
+      </div>
+
+      <!-- Demo (sólo prototipo): alternar verificación -->
+      <div class="demo-bar"><span class="t-label">Demo</span><button type="button" id="demo-kyc">Alternar verificação</button></div>
+    </aside>
+  </main>
+
+  <p class="legal legal-app">O jogo pode ser viciante. Jogue com responsabilidade. 18+.</p>
+</div>
+
+<nav class="tabbar" aria-label="Navegação"><ul></ul></nav>
+
+<!-- Modal: límite propio -->
+<div class="modal" id="m-limit" hidden role="dialog" aria-modal="true" aria-labelledby="m-limit-title">
+  <div class="scrim"></div>
+  <div class="modal-card surface-2">
+    <div class="modal-head"><h2 id="m-limit-title">Limite de depósito</h2><button class="icon-btn" type="button" data-close aria-label="Fechar">✕</button></div>
+    <form class="form" id="f-limit">
+      <label class="field"><span>Por dia</span><select name="day"><option value="">Sem limite próprio</option><option value="50">R$ 50,00</option><option value="100">R$ 100,00</option><option value="200">R$ 200,00</option><option value="500">R$ 500,00</option></select><span class="hint">Baixar o limite vale na hora. Subir leva 7 dias.</span></label>
+      <div class="modal-actions">
+        <button class="btn btn-ghost-brass" type="button" data-close>Cancelar</button>
+        <button class="btn btn-ghost-ok" type="submit">Salvar</button>
+      </div>
+    </form>
+    <p class="legal">O jogo pode ser viciante. Jogue com responsabilidade. 18+.</p>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+(function () {
+  var A = window.APP, $ = A.$, W = A.WALLET;
+  A.mountNav('caixa');
+  function parseAmt(s) { return Number(String(s).replace(/\./g, '').replace(',', '.')) || 0; }
+  function fmtIn(x) { return Number(x).toFixed(2).replace('.', ','); }
+  function refresh() {
+    $('saldo').textContent = A.brl(W.available);
+    $('reservado').textContent = A.brl(W.reserved);
+    document.querySelectorAll('.chip-saldo b').forEach(function (b) { b.textContent = A.brl(W.available); });
+  }
+  refresh();
+  $('dep-min').textContent = A.brl(W.limits.depMin); $('dep-max').textContent = A.brl(W.limits.depMax);
+  $('wd-min').textContent = A.brl(W.limits.wdMin); $('wd-max').textContent = A.brl(W.limits.wdMax); $('wd-fee').textContent = A.brl(W.limits.wdFee);
+  $('wd-cpf').textContent = A.ME.cpf; $('kyc-cpf').textContent = A.ME.cpf;
+
+  A.tabs($('tabs'));
+  if (location.hash === '#sacar') { $('tabs').querySelector('[data-v="wd"]').click(); }
+  if (location.hash === '#historico') { $('tabs').querySelector('[data-v="hist"]').click(); }
+
+  /* Presets → monto */
+  function wirePresets(seg, input, allFn) {
+    A.segment(seg, function (v) { input.value = fmtIn(v === 'all' ? allFn() : Number(v)); });
+    input.addEventListener('input', function () { seg.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', 'false'); }); });
+  }
+  wirePresets($('dep-presets'), $('dep-amt'));
+  wirePresets($('wd-presets'), $('wd-amt'), function () { return W.available; });
+
+  /* Depósito: validar límites, generar QR + copia e cola */
+  var ttl = null, pending = 0;
+  $('f-dep').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var v = parseAmt($('dep-amt').value);
+    if (v < W.limits.depMin) return A.toast('Depósito mínimo: ' + A.brl(W.limits.depMin), 'toast-danger');
+    if (v > W.limits.depMax) return A.toast('Máximo por dia: ' + A.brl(W.limits.depMax), 'toast-danger');
+    pending = v;
+    var code = A.pixPayload(v);
+    $('pix-amt').textContent = A.brl(v);
+    $('qr').innerHTML = A.qrSVG(code, 176);
+    $('pix-code').textContent = code;
+    $('pix-code').dataset.code = code;
+    $('dep-form').hidden = true; $('dep-pix').hidden = false;
+    var left = 30 * 60; clearInterval(ttl);
+    ttl = setInterval(function () { left--; if (left <= 0) { clearInterval(ttl); A.toast('Pix expirado. Gere outro.', 'toast-danger'); back(); return; } $('pix-ttl').textContent = String(Math.floor(left / 60)).padStart(2, '0') + ':' + String(left % 60).padStart(2, '0'); }, 1000);
+  });
+  function back() { clearInterval(ttl); $('dep-pix').hidden = true; $('dep-form').hidden = false; }
+  $('btn-novo').addEventListener('click', back);
+  $('btn-copy').addEventListener('click', function () { A.copy($('pix-code').dataset.code || '', 'Código Pix copiado.'); });
+  $('btn-sim').addEventListener('click', function () {
+    W.available = Math.round((W.available + pending) * 100) / 100;
+    A.HISTORY.unshift({ t: 'Agora', kind: 'dep', text: 'Depósito Pix', sub: 'Confirmado em 11 s', amt: pending, cls: 'ok' });
+    refresh(); renderHist(); back();
+    A.toast('Depósito confirmado · ' + A.brl(pending), 'toast-ok');
+  });
+
+  /* Saque: exige verificación; límites; voz neutra */
+  $('f-wd').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (document.body.dataset.kyc !== 'verificada') return A.toast('Conclua a verificação de identidade para sacar.', 'toast-danger');
+    var v = parseAmt($('wd-amt').value);
+    if (v < W.limits.wdMin) return A.toast('Saque mínimo: ' + A.brl(W.limits.wdMin), 'toast-danger');
+    if (v > W.available) return A.toast('Saldo disponível: ' + A.brl(W.available), 'toast-danger');
+    W.available = Math.round((W.available - v) * 100) / 100;
+    A.HISTORY.unshift({ t: 'Agora', kind: 'wd', text: 'Saque Pix · chave CPF', sub: 'Em processamento · até 1 dia útil', amt: -v, cls: 'lo', label: 'Processando' });
+    refresh(); renderHist();
+    A.toast('Saque solicitado · ' + A.brl(v) + ' · até 1 dia útil');
+  });
+
+  /* Histórico */
+  function renderHist() {
+    $('hist').innerHTML = A.HISTORY.map(function (h) {
+      var amt = h.amt === 0 ? (h.label || '') : (h.amt > 0 ? '+ ' : '− ') + A.brl(Math.abs(h.amt));
+      var sub = h.sub + (h.label && h.amt !== 0 ? ' · ' + h.label : '');
+      return '<li class="row" style="grid-template-columns:minmax(0,1fr) auto"><div class="main"><span class="l1">' + A.esc(h.text) + '</span><span class="l2">' + A.esc(h.t) + ' · ' + A.esc(sub) + '</span></div><span class="amt ' + h.cls + '">' + amt + '</span></li>';
+    }).join('');
+  }
+  renderHist();
+
+  /* Verificación: estado verificada / pendente */
+  function applyKyc() {
+    var ok = document.body.dataset.kyc === 'verificada';
+    $('kyc-chip').innerHTML = ok ? '<span class="dot ok"></span>Verificada' : '<span class="dot tie"></span>Pendente';
+    $('kyc-age').textContent = ok ? 'Confirmado' : 'Pendente'; $('kyc-age').className = ok ? 'ok' : '';
+    $('kyc-doc').textContent = ok ? 'Aprovado' : 'Não enviado';
+    $('kyc-selfie').textContent = ok ? 'Aprovada' : 'Não enviada';
+    $('kyc-actions').hidden = ok;
+    $('btn-wd').disabled = !ok; $('wd-block').hidden = ok; $('wd-note').hidden = !ok;
+  }
+  applyKyc();
+  $('demo-kyc').addEventListener('click', function () { document.body.dataset.kyc = document.body.dataset.kyc === 'verificada' ? 'pendente' : 'verificada'; applyKyc(); });
+  $('btn-kyc').addEventListener('click', function () { A.toast('Documento enviado · análise em até 24 h'); });
+
+  /* Jogo responsável */
+  var ml = A.modal('m-limit');
+  $('btn-limit').addEventListener('click', ml.open);
+  $('f-limit').addEventListener('submit', function (e) { e.preventDefault(); var v = e.target.day.value; $('self-limit').textContent = v ? A.brl(Number(v)) + ' por dia' : 'Não definido'; ml.close(); A.toast(v ? 'Limite salvo · ' + A.brl(Number(v)) + ' por dia' : 'Limite próprio removido'); });
+  $('btn-pause').addEventListener('click', function () { A.toast('Pausa da conta: escolha 24 h, 7 dias ou 30 dias na tela seguinte.'); });
+})();
+</script>
+</body>
+</html>
